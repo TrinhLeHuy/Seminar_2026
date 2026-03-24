@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Vĩnh Khánh Food Guide",
+    "slug": "vinh-khanh-food-guide",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.vinhkhanh.foodguide",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Ứng dụng cần vị trí để hiển thị gian hàng gần bạn trên bản đồ."
+      }
+    },
+    "android": {
+      "package": "com.vinhkhanh.foodguide",
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+        }
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    },
+    "plugins": [
+    "expo-audio",
+    "expo-barcode-scanner",
+    [
+      "expo-camera",
+      {
+        "cameraPermission": "Ứng dụng cần quyền camera để quét mã QR"
+      }
+    ]
+  ]
+  }
+}
