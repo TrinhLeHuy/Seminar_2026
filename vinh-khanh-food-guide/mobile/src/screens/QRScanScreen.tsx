@@ -18,7 +18,7 @@ import MapComponent from "../components/Map";
 import QRScannerMobile from "../components/QRScanner.native";
 import QRScannerWeb from "../components/QRScanner.web";
 
-const BASE_URL = "http://172.20.10.12:8080";
+const BASE_URL = "http://192.168.66.14:8080";
 
 export default function QRScannerScreen() {
   const { lang } = useLanguage();

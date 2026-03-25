@@ -14,7 +14,7 @@ import * as Speech from "expo-speech";
 import { useLanguage } from "../i18n/LanguageContext";
 import { getFoods } from "../api/food";
 
-const BASE_URL = "http://172.20.10.12:8080";
+const BASE_URL = "http://192.168.66.14:8080";
 
 export default function LocationDetail({ route }: any) {
   const { location } = route.params;
