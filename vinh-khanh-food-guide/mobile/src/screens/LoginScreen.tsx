@@ -12,7 +12,7 @@ import {
 const API_URL =
   Platform.OS === "web"
     ? "http://localhost:8080/api/auth/login"
-    : "http://192.168.66.14:8080/api/auth/login";
+    : "http://192.168.2.23:8080/api/auth/login";
 
 const LoginScreen = ({ navigation }: any) => {
   const [username, setUsername] = useState("");
@@ -45,7 +45,6 @@ const LoginScreen = ({ navigation }: any) => {
       } else {
         navigation.replace("RegisterBusiness");
       }
-
     } catch {
       alert("Sai tài khoản hoặc mật khẩu");
     } finally {
@@ -97,9 +96,7 @@ const LoginScreen = ({ navigation }: any) => {
           })
         }
       >
-        <Text style={styles.text}>
-          🚀 Vào ứng dụng (không cần đăng nhập)
-        </Text>
+        <Text style={styles.text}>🚀 Vào ứng dụng (không cần đăng nhập)</Text>
       </Pressable>
     </View>
   );

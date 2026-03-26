@@ -1,7 +1,7 @@
 import API from './api';
 import { Location } from '../types/Location';
 
-const BASE_URL = "http://192.168.66.14:8080/api";
+const BASE_URL = "http://192.168.2.23:8080/api";
 
 
 // =============================

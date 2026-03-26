@@ -1,3 +1,106 @@
+// import React, { useState } from "react";
+// import {
+//   View,
+//   Text,
+//   TextInput,
+//   Pressable,
+//   StyleSheet,
+//   ScrollView,
+// } from "react-native";
+
+// const RegisterBusinessScreen = () => {
+//   const [name, setName] = useState<string>("");
+//   const [description, setDescription] = useState<string>("");
+//   const [latitude, setLatitude] = useState<string>("");
+//   const [longitude, setLongitude] = useState<string>("");
+
+//   const handleSubmit = async () => {
+//     if (!name || !description) {
+//       alert("Nhập đầy đủ thông tin");
+//       return;
+//     }
+
+//     try {
+//       // TODO: call API create location (pending)
+//       console.log({ name, description, latitude, longitude });
+
+//       alert("Đăng ký thành công! Chờ admin duyệt");
+//     } catch {
+//       alert("Lỗi gửi đăng ký");
+//     }
+//   };
+
+//   return (
+//     <ScrollView style={styles.container}>
+//       <Text style={styles.title}>🏪 Đăng ký doanh nghiệp</Text>
+
+//       <TextInput
+//         placeholder="Tên quán"
+//         style={styles.input}
+//         value={name}
+//         onChangeText={setName}
+//       />
+
+//       <TextInput
+//         placeholder="Mô tả"
+//         style={styles.input}
+//         value={description}
+//         onChangeText={setDescription}
+//         multiline
+//       />
+
+//       <TextInput
+//         placeholder="Latitude (vd: 10.74277)"
+//         style={styles.input}
+//         value={latitude}
+//         onChangeText={setLatitude}
+//       />
+
+//       <TextInput
+//         placeholder="Longitude (vd: 106.69918)"
+//         style={styles.input}
+//         value={longitude}
+//         onChangeText={setLongitude}
+//       />
+
+//       <Pressable style={styles.button} onPress={handleSubmit}>
+//         <Text style={styles.btnText}>Gửi đăng ký</Text>
+//       </Pressable>
+//     </ScrollView>
+//   );
+// };
+
+// export default RegisterBusinessScreen;
+
+// const styles = StyleSheet.create({
+//   container: { flex: 1, padding: 20 },
+
+//   title: {
+//     fontSize: 26,
+//     marginBottom: 20,
+//     textAlign: "center",
+//   },
+
+//   input: {
+//     borderWidth: 1,
+//     borderColor: "#ddd",
+//     padding: 12,
+//     borderRadius: 10,
+//     marginBottom: 15,
+//   },
+
+//   button: {
+//     backgroundColor: "#28a745",
+//     padding: 15,
+//     borderRadius: 10,
+//   },
+
+//   btnText: {
+//     color: "#fff",
+//     textAlign: "center",
+//     fontWeight: "bold",
+//   },
+// });
 import React, { useState } from "react";
 import {
   View,
@@ -6,79 +109,246 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
+  Platform,
 } from "react-native";
 
-const RegisterBusinessScreen = () => {
-  const [name, setName] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [latitude, setLatitude] = useState<string>("");
-  const [longitude, setLongitude] = useState<string>("");
+const API_URL =
+  Platform.OS === "web"
+    ? "http://localhost:8080/api/business/register"
+    : "http://192.168.2.23:8080/api/business/register";
+
+export default function RegisterBusinessScreen() {
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    latitude: "",
+    longitude: "",
+    imageUrl: "",
+
+    foodName: "",
+    foodNameVi: "",
+    foodNameEn: "",
+    foodDescription: "",
+    foodDescriptionVi: "",
+    foodDescriptionEn: "",
+    price: "",
+    foodImageUrl: "",
+    audioUrl: "",
+    audioLanguage: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (key: string, value: string) => {
+    setForm({ ...form, [key]: value });
+  };
 
   const handleSubmit = async () => {
-    if (!name || !description) {
-      alert("Nhập đầy đủ thông tin");
+    if (!form.name || !form.foodName || !form.price) {
+      alert("❌ Vui lòng nhập đủ thông tin bắt buộc");
       return;
     }
 
-    try {
-      // TODO: call API create location (pending)
-      console.log({ name, description, latitude, longitude });
+    setLoading(true);
 
-      alert("Đăng ký thành công! Chờ admin duyệt");
-    } catch {
-      alert("Lỗi gửi đăng ký");
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: form.name,
+          description: form.description,
+          latitude: Number(form.latitude),
+          longitude: Number(form.longitude),
+          imageUrl: form.imageUrl,
+
+          foodName: form.foodName,
+          foodNameVi: form.foodNameVi,
+          foodNameEn: form.foodNameEn,
+          foodDescription: form.foodDescription,
+          foodDescriptionVi: form.foodDescriptionVi,
+          foodDescriptionEn: form.foodDescriptionEn,
+          price: Number(form.price),
+          foodImageUrl: form.foodImageUrl,
+          audio_url: form.audioUrl,
+          audio_language: form.audioLanguage,
+        }),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      alert("🎉 Đăng ký thành công!");
+    } catch (err: any) {
+      alert("❌ Lỗi: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>🏪 Đăng ký doanh nghiệp</Text>
+      <View style={styles.card}>
+        <Text style={styles.title}>🍜 Đăng ký quán ăn</Text>
+        <Text style={styles.subtitle}>Nhập thông tin quán và món ăn</Text>
 
-      <TextInput
-        placeholder="Tên quán"
-        style={styles.input}
-        value={name}
-        onChangeText={setName}
-      />
+        {/* THÔNG TIN QUÁN */}
+        <Text style={styles.section}>🏪 Thông tin quán</Text>
 
-      <TextInput
-        placeholder="Mô tả"
-        style={styles.input}
-        value={description}
-        onChangeText={setDescription}
-        multiline
-      />
+        <TextInput
+          placeholder="Tên quán"
+          style={styles.input}
+          onChangeText={(v) => handleChange("name", v)}
+        />
 
-      <TextInput
-        placeholder="Latitude (vd: 10.74277)"
-        style={styles.input}
-        value={latitude}
-        onChangeText={setLatitude}
-      />
+        <TextInput
+          placeholder="Mô tả"
+          style={styles.input}
+          multiline
+          onChangeText={(v) => handleChange("description", v)}
+        />
 
-      <TextInput
-        placeholder="Longitude (vd: 106.69918)"
-        style={styles.input}
-        value={longitude}
-        onChangeText={setLongitude}
-      />
+        <View style={styles.row}>
+          <TextInput
+            placeholder="Latitude"
+            style={[styles.input, styles.half]}
+            onChangeText={(v) => handleChange("latitude", v)}
+          />
+          <TextInput
+            placeholder="Longitude"
+            style={[styles.input, styles.half]}
+            onChangeText={(v) => handleChange("longitude", v)}
+          />
+        </View>
 
-      <Pressable style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.btnText}>Gửi đăng ký</Text>
-      </Pressable>
+        <TextInput
+          placeholder="Ảnh quán"
+          style={styles.input}
+          onChangeText={(v) => handleChange("imageUrl", v)}
+        />
+
+        {/* FOOD */}
+        <Text style={styles.section}>🍽️ Món ăn</Text>
+
+        <TextInput
+          placeholder="Tên món"
+          style={styles.input}
+          onChangeText={(v) => handleChange("foodName", v)}
+        />
+
+        <View style={styles.row}>
+          <TextInput
+            placeholder="Tên VI"
+            style={[styles.input, styles.half]}
+            onChangeText={(v) => handleChange("foodNameVi", v)}
+          />
+          <TextInput
+            placeholder="Tên EN"
+            style={[styles.input, styles.half]}
+            onChangeText={(v) => handleChange("foodNameEn", v)}
+          />
+        </View>
+
+        <TextInput
+          placeholder="Mô tả món"
+          style={styles.input}
+          multiline
+          onChangeText={(v) => handleChange("foodDescription", v)}
+        />
+
+        <View style={styles.row}>
+          <TextInput
+            placeholder="Mô tả VI"
+            style={[styles.input, styles.half]}
+            multiline
+            onChangeText={(v) => handleChange("foodDescriptionVi", v)}
+          />
+          <TextInput
+            placeholder="Mô tả EN"
+            style={[styles.input, styles.half]}
+            multiline
+            onChangeText={(v) => handleChange("foodDescriptionEn", v)}
+          />
+        </View>
+
+        <TextInput
+          placeholder="Giá"
+          style={styles.input}
+          keyboardType="numeric"
+          onChangeText={(v) => handleChange("price", v)}
+        />
+
+        <TextInput
+          placeholder="Ảnh món"
+          style={styles.input}
+          onChangeText={(v) => handleChange("foodImageUrl", v)}
+        />
+
+        {/* AUDIO */}
+        <Text style={styles.section}>🔊 Audio</Text>
+
+        <TextInput
+          placeholder="Audio URL"
+          style={styles.input}
+          onChangeText={(v) => handleChange("audioUrl", v)}
+        />
+
+        <TextInput
+          placeholder="Ngôn ngữ (vi / en)"
+          style={styles.input}
+          onChangeText={(v) => handleChange("audioLanguage", v)}
+        />
+
+        <Pressable style={styles.button} onPress={handleSubmit}>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.btnText}>🚀 Đăng ký quán</Text>
+          )}
+        </Pressable>
+      </View>
     </ScrollView>
   );
-};
-
-export default RegisterBusinessScreen;
+}
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: "#fafafa",
+    padding: 16,
+  },
+
+  card: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+  },
 
   title: {
-    fontSize: 26,
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+
+  subtitle: {
+    color: "#666",
     marginBottom: 20,
-    textAlign: "center",
+  },
+
+  section: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginTop: 20,
+    marginBottom: 10,
   },
 
   input: {
@@ -86,13 +356,24 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     padding: 12,
     borderRadius: 10,
-    marginBottom: 15,
+    marginBottom: 12,
+    backgroundColor: "#fff",
+  },
+
+  row: {
+    flexDirection: "row",
+    gap: 10,
+  },
+
+  half: {
+    flex: 1,
   },
 
   button: {
-    backgroundColor: "#28a745",
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: "#ef4444",
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 10,
   },
 
   btnText: {
