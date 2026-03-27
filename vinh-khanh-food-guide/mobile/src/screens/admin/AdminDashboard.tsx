@@ -34,7 +34,7 @@ const AdminDashboard = () => {
       </Pressable>
       <Pressable
         style={styles.card}
-        onPress={() => navigation.navigate("LocationManagement")}
+        onPress={() => navigation.navigate("LocationManagementScreen")}
       >
         {" "}
         <Text style={styles.text}>📍 Quản lý Location</Text>{" "}
