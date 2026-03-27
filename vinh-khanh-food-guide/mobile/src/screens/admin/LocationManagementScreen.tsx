@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Pressable,
 } from "react-native";
 
 export default function LocationManagementScreen({ navigation }: any) {
@@ -85,21 +86,20 @@ export default function LocationManagementScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Nút Add */}
-      <TouchableOpacity
-        style={{
-          padding: 12,
-          backgroundColor: "#4CAF50",
-          alignItems: "center",
-          margin: 12,
-          borderRadius: 8,
-        }}
-        onPress={() => navigation.navigate("LocationCreate")}
-      >
-        <Text style={{ color: "#fff", fontWeight: "bold" }}>
-          + Add Location
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.topRow}>
+        {/* Back Button */}
+        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Text style={styles.backText}>⬅ Back</Text>
+        </Pressable>
+
+        {/* Add Button */}
+        <Pressable
+          onPress={() => navigation.navigate("LocationCreate")}
+          style={styles.addBtn}
+        >
+          <Text style={styles.addText}>+ Add Location</Text>
+        </Pressable>
+      </View>
 
       {/* FlatList với header */}
       <FlatList
@@ -180,17 +180,38 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
   },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between", // Back bên trái, Add bên phải
+    alignItems: "center",
+    marginBottom: 16,
+  },
 
+  backBtn: {
+    padding: 8,
+  },
+
+  backText: {
+    color: "#ef4444",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+
+  addBtn: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+
+  addText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
   addButton: {
     backgroundColor: "green",
     padding: 12,
     borderRadius: 8,
     marginBottom: 20,
-  },
-
-  addText: {
-    color: "#fff",
-    textAlign: "center",
-    fontWeight: "bold",
   },
 });

@@ -75,7 +75,7 @@ export default function App() {
           <Stack.Screen name="QRLogs" component={QRLogs} />
 
           <Stack.Screen
-            name="BusinessDetail"
+            name="BusinessDetailScreen"
             component={BusinessDetailScreen}
           />
 

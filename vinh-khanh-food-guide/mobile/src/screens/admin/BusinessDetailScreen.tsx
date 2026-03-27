@@ -75,20 +75,23 @@ export default function BusinessDetailScreen() {
   }
 
   return (
-    <ScrollView style={styles.page}>
+    <ScrollView
+      style={styles.page}
+      contentContainerStyle={{ padding: 16, paddingTop: 0 }}
+    >
       <View style={styles.container}>
         {/* BACK BUTTON */}
         <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Text style={styles.backText}>← Quay lại</Text>
         </Pressable>
 
-        {/* IMAGE */}
+        {/* IMAGE
         <Image
           source={{
             uri: business.imageUrl || "https://via.placeholder.com/500",
           }}
           style={styles.image}
-        />
+        /> */}
 
         {/* LOCATION INFO */}
         <View style={styles.card}>
@@ -131,15 +134,6 @@ export default function BusinessDetailScreen() {
           <Text style={styles.section}>🎧 Audio</Text>
 
           <Text>Language: {business.audioLanguage}</Text>
-
-          {business.audioUrl && (
-            <Pressable
-              style={styles.audioBtn}
-              onPress={() => Linking.openURL(business.audioUrl)}
-            >
-              <Text style={styles.audioText}>▶ Nghe Audio</Text>
-            </Pressable>
-          )}
         </View>
 
         {/* TIME */}
@@ -164,7 +158,6 @@ const styles = StyleSheet.create({
     maxWidth: 700,
     alignSelf: "center",
     width: "100%",
-    padding: 16,
   },
 
   center: {
@@ -174,7 +167,7 @@ const styles = StyleSheet.create({
   },
 
   backBtn: {
-    marginBottom: 10,
+    marginBottom: 8,
   },
 
   backText: {
@@ -187,7 +180,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 220,
     borderRadius: 10,
-    marginBottom: 16,
+    marginBottom: 8,
   },
 
   card: {
@@ -199,6 +192,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
+    marginTop: 4,
   },
 
   title: {
