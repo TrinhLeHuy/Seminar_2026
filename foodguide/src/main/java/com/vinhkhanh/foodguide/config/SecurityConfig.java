@@ -54,18 +54,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/uploads/**").permitAll()
-                .requestMatchers("/api/qr-scan/**").permitAll()
-                .requestMatchers("/api/locations/**").permitAll()
-                .requestMatchers("/api/foods/**").permitAll()
-                .requestMatchers("/api/audio-guides/**").permitAll()
-                .requestMatchers("/api/qr-codes/**").permitAll()
-                .anyRequest().authenticated()
-            );
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/api/qr-scan/**").permitAll()
+                        .requestMatchers("/api/locations/**").permitAll()
+                        .requestMatchers("/api/foods/**").permitAll()
+                        .requestMatchers("/api/audio-guides/**").permitAll()
+                        .requestMatchers("/api/qr-codes/**").permitAll()
+                        .requestMatchers("/api/business/register").permitAll()
+                        .anyRequest().authenticated());
 
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
