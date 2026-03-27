@@ -102,6 +102,7 @@
 //   },
 // });
 import React, { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   View,
@@ -205,8 +206,15 @@ export default function RegisterBusinessScreen() {
       setLoading(false);
     }
   };
+  const navigation = useNavigation();
   return (
     <ScrollView style={styles.container}>
+      <Pressable
+        style={{ marginBottom: 10 }}
+        onPress={() => navigation.goBack()} // quay lại màn trước
+      >
+        <Text style={{ color: "#9333ea", fontWeight: "bold" }}>⬅ Back</Text>
+      </Pressable>
       <View style={styles.card}>
         <Text style={styles.title}>🍜 Đăng ký quán ăn</Text>
         <Text style={styles.subtitle}>Nhập thông tin quán và món ăn</Text>
