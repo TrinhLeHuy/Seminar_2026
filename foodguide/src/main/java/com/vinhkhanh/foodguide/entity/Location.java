@@ -2,11 +2,13 @@ package com.vinhkhanh.foodguide.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+@Builder
 @Entity
 @Table(name = "location")
 @Data
@@ -45,4 +47,5 @@ public class Location {
 
     @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<QRCode> qrCodes;
+
 }

@@ -2,10 +2,12 @@ package com.vinhkhanh.foodguide.service;
 
 import com.vinhkhanh.foodguide.dto.JwtResponse;
 import com.vinhkhanh.foodguide.dto.LoginRequest;
+import com.vinhkhanh.foodguide.dto.RegisterRequest;
 import com.vinhkhanh.foodguide.entity.User;
 import com.vinhkhanh.foodguide.repository.UserRepository;
 import com.vinhkhanh.foodguide.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,32 +17,47 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
-    @Autowired
-    private AuthenticationManager authenticationManager;
+        @Autowired
+        private AuthenticationManager authenticationManager;
 
-    @Autowired
-    private UserRepository userRepository;
+        @Autowired
+        private UserRepository userRepository;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+        @Autowired
+        private JwtUtil jwtUtil;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+        @Autowired
+        private PasswordEncoder passwordEncoder;
 
-    public JwtResponse login(LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
-                )
-        );
+        public JwtResponse login(LoginRequest loginRequest) {
+                Authentication authentication = authenticationManager.authenticate(
+                                new UsernamePasswordAuthenticationToken(
+                                                loginRequest.getUsername(),
+                                                loginRequest.getPassword()));
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        User user = userRepository.findByUsername(loginRequest.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                User user = userRepository.findByUsername(loginRequest.getUsername())
+                                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String token = jwtUtil.generateToken(user.getUsername(), user.getUserId(), user.getRole());
+                String token = jwtUtil.generateToken(user.getUsername(), user.getUserId(), user.getRole());
 
-        return new JwtResponse(token, "Bearer", user.getUserId(), user.getUsername(), user.getRole());
-    }
+                return new JwtResponse(token, "Bearer", user.getUserId(), user.getUsername(), user.getRole());
+        }
+
+        public User register(RegisterRequest registerRequest) {
+                if (userRepository.existsByUsername(registerRequest.getUsername())) {
+                        throw new RuntimeException("Username đã tồn tại");
+                }
+
+                User user = new User();
+                user.setUsername(registerRequest.getUsername());
+                user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+                user.setRole(registerRequest.getRole() != null ? registerRequest.getRole() : "USER");
+
+                try {
+                        return userRepository.save(user);
+                } catch (DataIntegrityViolationException e) {
+                        throw new RuntimeException("Lỗi khi tạo tài khoản: " + e.getMessage());
+                }
+        }
 }

@@ -2,12 +2,14 @@ package com.vinhkhanh.foodguide.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "audio_guide")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class AudioGuide {
