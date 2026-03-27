@@ -23,7 +23,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Speech from "expo-speech";
 import { voiceMap } from "../i18n/translations";
 
-const BASE_URL = "http://192.168.66.14:8080";
+const BASE_URL = "http://192.168.2.23:8080";
 const { width } = Dimensions.get("window");
 
 export default function HomeScreen() {
@@ -108,8 +108,7 @@ export default function HomeScreen() {
 
   // 🔊 SPEAK (WEB + MOBILE)
   const speakLocation = (item: any, food?: any) => {
-    const text =
-      food?.description || item?.description || item?.name;
+    const text = food?.description || item?.description || item?.name;
 
     if (!text) return;
 
@@ -173,15 +172,11 @@ export default function HomeScreen() {
   const filteredLocations =
     selectedFood === null
       ? locations
-      : locations.filter(
-          (l) => l.locationId === selectedFood.locationId
-        );
+      : locations.filter((l) => l.locationId === selectedFood.locationId);
 
   // 🔍 SEARCH
   const finalLocations = filteredLocations.filter((location) =>
-    location.name
-      ?.toLowerCase()
-      .includes(searchText.toLowerCase())
+    location.name?.toLowerCase().includes(searchText.toLowerCase()),
   );
 
   const getImageUri = (url?: string) =>
@@ -210,10 +205,7 @@ export default function HomeScreen() {
             return (
               <Pressable
                 key={food.foodId}
-                style={[
-                  styles.categoryItem,
-                  isActive && styles.activeCategory,
-                ]}
+                style={[styles.categoryItem, isActive && styles.activeCategory]}
                 onPress={() => {
                   setSelectedFood(food);
 
@@ -262,10 +254,7 @@ export default function HomeScreen() {
         {/* LIST */}
         <ScrollView horizontal style={{ marginTop: 10 }}>
           {finalLocations
-            .filter(
-              (item) =>
-                item.locationId !== selectedLocation?.locationId
-            )
+            .filter((item) => item.locationId !== selectedLocation?.locationId)
             .map((item) => (
               <Pressable
                 key={item.locationId}
@@ -276,9 +265,7 @@ export default function HomeScreen() {
                   source={{ uri: getImageUri(item.imageUrl) }}
                   style={styles.locationImage}
                 />
-                <Text style={styles.locationName}>
-                  {item.name}
-                </Text>
+                <Text style={styles.locationName}>{item.name}</Text>
               </Pressable>
             ))}
         </ScrollView>
@@ -291,19 +278,13 @@ export default function HomeScreen() {
               style={styles.infoImage}
             />
 
-            <Text style={styles.infoTitle}>
-              {selectedFood.name}
-            </Text>
+            <Text style={styles.infoTitle}>{selectedFood.name}</Text>
 
-            <Text style={styles.infoDesc}>
-              {selectedFood.description}
-            </Text>
+            <Text style={styles.infoDesc}>{selectedFood.description}</Text>
 
             <Pressable
               style={styles.audioButton}
-              onPress={
-                isPlaying ? toggleAudio : loadAndPlayAudio
-              }
+              onPress={isPlaying ? toggleAudio : loadAndPlayAudio}
             >
               <Ionicons
                 name={isPlaying ? "pause-circle" : "play-circle"}

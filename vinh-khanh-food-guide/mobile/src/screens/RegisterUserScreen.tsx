@@ -12,22 +12,37 @@ import {
 const API_URL =
   Platform.OS === "web"
     ? "http://localhost:8080/api/auth/register"
-    : "http://192.168.66.14:8080/api/auth/register";
+    : "http://192.168.2.23:8080/api/auth/register";
 
-const RegisterUserScreen = ({ navigation }: any) => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+export default function RegisterUserScreen({ navigation }: any) {
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+    confirmPassword: "",
+  });
+
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (key: string, value: string) => {
+    setForm({ ...form, [key]: value });
+  };
 
   const handleRegister = async () => {
-    if (!username || !password || !confirmPassword) {
-      alert("Nhập đầy đủ thông tin");
+    setError("");
+
+    if (!form.username || !form.password) {
+      setError("Vui lòng nhập đầy đủ thông tin");
       return;
     }
 
-    if (password !== confirmPassword) {
-      alert("Mật khẩu không khớp");
+    if (form.password.length < 6) {
+      setError("Mật khẩu phải >= 6 ký tự");
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setError("Mật khẩu không khớp");
       return;
     }
 
@@ -40,9 +55,9 @@ const RegisterUserScreen = ({ navigation }: any) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username,
-          password,
-          role: "USER", // 👈 luôn tạo user thường
+          username: form.username,
+          password: form.password,
+          role: "USER",
         }),
       });
 
@@ -52,13 +67,11 @@ const RegisterUserScreen = ({ navigation }: any) => {
         throw new Error(data.message || "Đăng ký thất bại");
       }
 
-      alert("Tạo tài khoản thành công!");
+      alert("Tạo tài khoản thành công");
 
-      // 👉 quay về login
       navigation.goBack();
-
     } catch (err: any) {
-      alert(err.message || "Có lỗi xảy ra");
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -66,76 +79,114 @@ const RegisterUserScreen = ({ navigation }: any) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>📝 Tạo tài khoản</Text>
+      <Text style={styles.logo}>🍜 Vĩnh Khánh Food Guide</Text>
 
-      <TextInput
-        placeholder="Username"
-        style={styles.input}
-        value={username}
-        onChangeText={setUsername}
-      />
+      <View style={styles.card}>
+        <Text style={styles.title}>Đăng ký</Text>
 
-      <TextInput
-        placeholder="Password"
-        secureTextEntry
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-      />
+        {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <TextInput
-        placeholder="Xác nhận mật khẩu"
-        secureTextEntry
-        style={styles.input}
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
+        <TextInput
+          placeholder="Username"
+          style={styles.input}
+          value={form.username}
+          onChangeText={(v) => handleChange("username", v)}
+        />
 
-      <Pressable style={styles.registerBtn} onPress={handleRegister}>
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.text}>Đăng ký</Text>
-        )}
-      </Pressable>
+        <TextInput
+          placeholder="Mật khẩu"
+          secureTextEntry
+          style={styles.input}
+          value={form.password}
+          onChangeText={(v) => handleChange("password", v)}
+        />
 
-      <Pressable onPress={() => navigation.goBack()}>
-        <Text style={{ textAlign: "center", marginTop: 15 }}>
-          ← Quay lại đăng nhập
-        </Text>
-      </Pressable>
+        <TextInput
+          placeholder="Nhập lại mật khẩu"
+          secureTextEntry
+          style={styles.input}
+          value={form.confirmPassword}
+          onChangeText={(v) => handleChange("confirmPassword", v)}
+        />
+
+        <Pressable style={styles.button} onPress={handleRegister}>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Đăng ký</Text>
+          )}
+        </Pressable>
+
+        <Pressable onPress={() => navigation.goBack()}>
+          <Text style={styles.loginLink}>Đã có tài khoản? Đăng nhập</Text>
+        </Pressable>
+      </View>
     </View>
   );
-};
-
-export default RegisterUserScreen;
+}
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 20 },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 20,
+    backgroundColor: "#fff7ed",
+  },
 
   logo: {
-    fontSize: 28,
+    fontSize: 24,
     textAlign: "center",
-    marginBottom: 30,
+    marginBottom: 20,
+    fontWeight: "bold",
+  },
+
+  card: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+
+  title: {
+    fontSize: 20,
+    textAlign: "center",
+    marginBottom: 15,
     fontWeight: "bold",
   },
 
   input: {
     borderWidth: 1,
+    borderColor: "#ddd",
     padding: 12,
-    borderRadius: 10,
-    marginBottom: 15,
+    borderRadius: 8,
+    marginBottom: 12,
   },
 
-  registerBtn: {
-    backgroundColor: "#007bff",
-    padding: 15,
-    borderRadius: 10,
+  button: {
+    backgroundColor: "#ef4444",
+    padding: 14,
+    borderRadius: 8,
+    marginTop: 10,
   },
 
-  text: {
-    color: "#fff",
+  buttonText: {
+    color: "white",
     textAlign: "center",
     fontWeight: "bold",
+  },
+
+  loginLink: {
+    marginTop: 15,
+    textAlign: "center",
+    color: "#ea580c",
+  },
+
+  error: {
+    color: "red",
+    marginBottom: 10,
+    textAlign: "center",
   },
 });
