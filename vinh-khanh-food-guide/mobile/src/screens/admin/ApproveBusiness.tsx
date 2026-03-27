@@ -62,6 +62,7 @@
 //     alignItems: "center",
 //   },
 // });
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -75,24 +76,42 @@ import {
   Platform,
 } from "react-native";
 
+interface Business {
+  id: number;
+  name: string;
+  imageUrl: string;
+  foodName: string;
+  price: number;
+  address: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+}
+
 const API_BASE =
   Platform.OS === "web" ? "http://localhost:8080" : "http://192.168.2.23:8080";
 
 export default function ApproveBusinessScreen() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const token = Platform.OS === "web" ? localStorage.getItem("token") : null;
 
   useEffect(() => {
     fetchPending();
   }, []);
 
+  const getToken = async (): Promise<string | null> => {
+    if (Platform.OS === "web") {
+      return localStorage.getItem("token");
+    } else {
+      return await AsyncStorage.getItem("token");
+    }
+  };
+
   const fetchPending = async () => {
     try {
       const token = await getToken();
 
-      const res = await fetch(`${API_BASE}/api/admin/business/pending`, {
+      console.log("TOKEN:", token);
+
+      const res = await fetch(`${API_BASE}/api/business/pending`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -100,11 +119,11 @@ export default function ApproveBusinessScreen() {
 
       const json = await res.json();
 
-      console.log("DATA:", json);
+      console.log("PENDING DATA:", json);
 
       setData(json);
     } catch (err) {
-      console.log("ERROR:", err);
+      console.log("FETCH ERROR", err);
       Alert.alert("Lỗi tải dữ liệu");
     } finally {
       setLoading(false);
@@ -112,77 +131,88 @@ export default function ApproveBusinessScreen() {
   };
 
   const approve = async (id: number) => {
+    console.log("APPROVE FUNCTION RUN:", id);
+
     try {
-      await fetch(`${API_BASE}/api/admin/business/${id}/approve`, {
+      const token = await getToken();
+
+      const res = await fetch(`${API_BASE}/api/business/approve/${id}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      Alert.alert("✅ Đã duyệt");
-      setData(data.filter((b) => b.id !== id));
-    } catch {
-      Alert.alert("Lỗi duyệt");
+      const text = await res.text();
+
+      console.log("APPROVE RESPONSE:", text);
+
+      if (!res.ok) {
+        throw new Error(text);
+      }
+
+      setData((prev) => prev.filter((b) => b.id !== id));
+
+      Alert.alert("✅ Đã duyệt quán");
+    } catch (err) {
+      console.log("APPROVE ERROR:", err);
+      Alert.alert("Duyệt thất bại");
     }
   };
 
   const reject = async (id: number) => {
+    console.log("REJECT FUNCTION RUN:", id);
+
     try {
-      await fetch(`${API_BASE}/api/admin/business/${id}/reject`, {
+      const token = await getToken();
+
+      const res = await fetch(`${API_BASE}/api/business/reject/${id}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
+      if (!res.ok) {
+        throw new Error("Reject failed");
+      }
+
+      setData((prev) => prev.filter((b) => b.id !== id));
+
       Alert.alert("❌ Đã từ chối");
-      setData(data.filter((b) => b.id !== id));
-    } catch {
-      Alert.alert("Lỗi từ chối");
+    } catch (err) {
+      console.log(err);
+      Alert.alert("Từ chối thất bại");
     }
   };
 
-  const renderItem = ({ item }: any) => (
+  const renderItem = ({ item }: { item: Business }) => (
     <View style={styles.card}>
       <Image source={{ uri: item.imageUrl }} style={styles.image} />
 
-      <View style={styles.info}>
-        <Text style={styles.name}>{item.name}</Text>
-
-        <Text style={styles.food}>🍜 {item.foodName}</Text>
-
-        <Text style={styles.price}>{item.price}đ</Text>
-
+      <View style={styles.content}>
+        <Text style={styles.title}>{item.name}</Text>
+        <Text>🍜 {item.foodName}</Text>
+        <Text style={styles.price}>{item.price.toLocaleString()}đ</Text>
         <Text style={styles.address}>{item.address}</Text>
 
-        <Text style={styles.status}>
-          {item.status === "PENDING" && "🟠 Chờ duyệt"}
-          {item.status === "APPROVED" && "🟢 Đã duyệt"}
-          {item.status === "REJECTED" && "🔴 Từ chối"}
-        </Text>
-
-        <View style={styles.actions}>
+        <View style={styles.row}>
           <Pressable
-            style={[styles.button, styles.approve]}
-            onPress={() =>
-              Alert.alert("Duyệt quán?", "", [
-                { text: "Huỷ" },
-                { text: "Duyệt", onPress: () => approve(item.id) },
-              ])
-            }
+            style={styles.approve}
+            onPress={() => {
+              console.log("CLICK APPROVE", item.id);
+              approve(item.id);
+            }}
           >
             <Text style={styles.btnText}>Duyệt</Text>
           </Pressable>
 
           <Pressable
-            style={[styles.button, styles.reject]}
-            onPress={() =>
-              Alert.alert("Từ chối?", "", [
-                { text: "Huỷ" },
-                { text: "Từ chối", onPress: () => reject(item.id) },
-              ])
-            }
+            style={styles.reject}
+            onPress={() => {
+              console.log("CLICK REJECT", item.id);
+              reject(item.id);
+            }}
           >
             <Text style={styles.btnText}>Từ chối</Text>
           </Pressable>
@@ -201,12 +231,25 @@ export default function ApproveBusinessScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🛠️ Duyệt quán ăn</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>🛠️ Duyệt quán ăn</Text>
+        <Text style={styles.headerSubtitle}>
+          Xem danh sách các quán đang chờ phê duyệt
+        </Text>
+      </View>
 
+      {/* List */}
       <FlatList
         data={data}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        ListEmptyComponent={
+          <View style={{ alignItems: "center", marginTop: 40 }}>
+            <Text>Không có quán chờ duyệt</Text>
+          </View>
+        }
       />
     </View>
   );
@@ -216,13 +259,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: "#fafafa",
   },
 
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   card: {
@@ -230,74 +272,71 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 16,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
+    elevation: 4,
   },
 
   image: {
     width: "100%",
-    height: 150,
+    height: 160,
   },
 
-  info: {
+  content: {
     padding: 12,
   },
 
-  name: {
+  title: {
     fontSize: 18,
     fontWeight: "bold",
   },
 
-  food: {
-    marginTop: 4,
-    color: "#555",
-  },
-
   price: {
-    marginTop: 4,
+    color: "red",
     fontWeight: "bold",
-    color: "#ef4444",
   },
 
   address: {
-    marginTop: 4,
-    color: "#666",
+    color: "gray",
   },
 
-  status: {
-    marginTop: 6,
-  },
-
-  actions: {
+  row: {
     flexDirection: "row",
-    gap: 10,
     marginTop: 10,
+    gap: 10,
   },
 
-  button: {
+  approve: {
     flex: 1,
+    backgroundColor: "green",
     padding: 10,
     borderRadius: 8,
     alignItems: "center",
   },
 
-  approve: {
-    backgroundColor: "#22c55e",
-  },
-
   reject: {
-    backgroundColor: "#ef4444",
+    flex: 1,
+    backgroundColor: "red",
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
   },
 
   btnText: {
     color: "#fff",
     fontWeight: "bold",
   },
+  header: {
+    marginBottom: 16,
+  },
 
-  center: {
-    flex: 1,
-    justifyContent: "center",
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#111827",
+  },
+
+  headerSubtitle: {
+    fontSize: 14,
+    color: "#6b7280",
+    marginTop: 4,
   },
 });

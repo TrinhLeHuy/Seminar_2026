@@ -102,6 +102,7 @@
 //   },
 // });
 import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   View,
   Text,
@@ -121,6 +122,7 @@ const API_URL =
 export default function RegisterBusinessScreen() {
   const [form, setForm] = useState({
     name: "",
+    address: "",
     description: "",
     latitude: "",
     longitude: "",
@@ -153,17 +155,26 @@ export default function RegisterBusinessScreen() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("token");
+      // ✅ await token
+      const token = await AsyncStorage.getItem("token");
+
+      console.log("Token from storage:", token);
+
+      if (!token) {
+        alert("❌ Chưa đăng nhập hoặc token không hợp lệ");
+        return;
+      }
 
       const res = await fetch(API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token.trim()}`, // trim tránh khoảng trắng
         },
         body: JSON.stringify({
           name: form.name,
           description: form.description,
+          address: form.address,
           latitude: Number(form.latitude),
           longitude: Number(form.longitude),
           imageUrl: form.imageUrl,
@@ -176,21 +187,24 @@ export default function RegisterBusinessScreen() {
           foodDescriptionEn: form.foodDescriptionEn,
           price: Number(form.price),
           foodImageUrl: form.foodImageUrl,
-          audio_url: form.audioUrl,
-          audio_language: form.audioLanguage,
+          audioUrl: form.audioUrl,
+          audioLanguage: form.audioLanguage,
         }),
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText);
+      }
 
       alert("🎉 Đăng ký thành công!");
     } catch (err: any) {
+      console.error("Error registering business:", err);
       alert("❌ Lỗi: " + err.message);
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <ScrollView style={styles.container}>
       <View style={styles.card}>
@@ -204,6 +218,11 @@ export default function RegisterBusinessScreen() {
           placeholder="Tên quán"
           style={styles.input}
           onChangeText={(v) => handleChange("name", v)}
+        />
+        <TextInput
+          placeholder="Địa chỉ"
+          style={styles.input}
+          onChangeText={(v) => handleChange("address", v)}
         />
 
         <TextInput
