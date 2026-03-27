@@ -64,6 +64,7 @@
 // });
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
+import { useNavigation } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -75,7 +76,8 @@ import {
   Alert,
   Platform,
 } from "react-native";
-
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../navigation/types";
 interface Business {
   id: number;
   name: string;
@@ -96,7 +98,10 @@ export default function ApproveBusinessScreen() {
   useEffect(() => {
     fetchPending();
   }, []);
-
+  type NavigationProp = StackNavigationProp<
+    RootStackParamList,
+    "ApproveBusinessScreen"
+  >;
   const getToken = async (): Promise<string | null> => {
     if (Platform.OS === "web") {
       return localStorage.getItem("token");
@@ -185,11 +190,15 @@ export default function ApproveBusinessScreen() {
       Alert.alert("Từ chối thất bại");
     }
   };
-
+  const navigation = useNavigation<NavigationProp>();
   const renderItem = ({ item }: { item: Business }) => (
-    <View style={styles.card}>
+    <Pressable
+      onPress={() =>
+        navigation.navigate("BusinessDetailScreen", { id: item.id })
+      }
+      style={styles.card}
+    >
       <Image source={{ uri: item.imageUrl }} style={styles.image} />
-
       <View style={styles.content}>
         <Text style={styles.title}>{item.name}</Text>
         <Text>🍜 {item.foodName}</Text>
@@ -199,8 +208,8 @@ export default function ApproveBusinessScreen() {
         <View style={styles.row}>
           <Pressable
             style={styles.approve}
-            onPress={() => {
-              console.log("CLICK APPROVE", item.id);
+            onPress={(e) => {
+              e.stopPropagation(); // ngăn click card bị trigger
               approve(item.id);
             }}
           >
@@ -209,8 +218,8 @@ export default function ApproveBusinessScreen() {
 
           <Pressable
             style={styles.reject}
-            onPress={() => {
-              console.log("CLICK REJECT", item.id);
+            onPress={(e) => {
+              e.stopPropagation(); // ngăn click card bị trigger
               reject(item.id);
             }}
           >
@@ -218,7 +227,7 @@ export default function ApproveBusinessScreen() {
           </Pressable>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 
   if (loading) {
@@ -231,6 +240,12 @@ export default function ApproveBusinessScreen() {
 
   return (
     <View style={styles.container}>
+      <Pressable
+        style={{ marginBottom: 10 }}
+        onPress={() => navigation.goBack()} // quay lại màn trước
+      >
+        <Text style={{ color: "#ef4444", fontWeight: "bold" }}>⬅ Back</Text>
+      </Pressable>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>🛠️ Duyệt quán ăn</Text>

@@ -2,6 +2,7 @@ package com.vinhkhanh.foodguide.controller;
 
 import com.vinhkhanh.foodguide.entity.User;
 import com.vinhkhanh.foodguide.entity.BusinessRegistration;
+import com.vinhkhanh.foodguide.repository.BusinessRegistrationRepository;
 import com.vinhkhanh.foodguide.repository.UserRepository;
 import com.vinhkhanh.foodguide.service.BusinessRegistrationService;
 import org.springframework.security.core.Authentication;
@@ -20,6 +21,9 @@ public class BusinessRegistrationController {
     private BusinessRegistrationService service;
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BusinessRegistrationRepository businessRepo;
 
     // ================= USER ĐĂNG KÝ =================
     // @PreAuthorize("hasRole('USER')")
@@ -73,5 +77,12 @@ public class BusinessRegistrationController {
     public String reject(@PathVariable Long id) {
         service.reject(id);
         return "Rejected";
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getBusinessById(@PathVariable Long id) {
+        return businessRepo.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }

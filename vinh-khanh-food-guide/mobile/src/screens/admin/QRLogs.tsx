@@ -57,10 +57,11 @@ import {
   FlatList,
   Dimensions,
   ActivityIndicator,
+  Pressable,
 } from "react-native";
 
 import { LineChart } from "react-native-chart-kit";
-
+import { useNavigation } from "@react-navigation/native";
 const screenWidth = Dimensions.get("window").width;
 
 export default function QRLogs() {
@@ -71,7 +72,7 @@ export default function QRLogs() {
     hotLocation: "N/A",
     popularDevice: "N/A",
   });
-
+  const navigation = useNavigation();
   const [scansByDay, setScansByDay] = useState<any>({});
   const [scansByHour, setScansByHour] = useState<any>({});
   const [loading, setLoading] = useState(true);
@@ -151,9 +152,14 @@ export default function QRLogs() {
   if (loading) {
     return <ActivityIndicator style={{ marginTop: 100 }} size="large" />;
   }
-
   return (
     <ScrollView style={styles.container}>
+      <Pressable
+        style={{ marginBottom: 10 }}
+        onPress={() => navigation.goBack()} // quay lại màn trước
+      >
+        <Text style={{ color: "#ef4444", fontWeight: "bold" }}>⬅ Back</Text>
+      </Pressable>
       <Text style={styles.title}>📊 QR Analytics</Text>
 
       {/* SUMMARY */}

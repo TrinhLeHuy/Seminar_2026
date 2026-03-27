@@ -71,6 +71,7 @@ import {
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { Picker } from "@react-native-picker/picker";
+import { useNavigation } from "@react-navigation/native";
 export default function AdminQRCodesScreen() {
   const [qrValue, setQrValue] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<any | null>(null);
@@ -172,9 +173,15 @@ export default function AdminQRCodesScreen() {
       </Pressable>
     </View>
   );
-
+  const navigation = useNavigation();
   return (
     <ScrollView style={styles.container}>
+      <Pressable
+        style={{ marginBottom: 10 }}
+        onPress={() => navigation.goBack()} // quay lại màn trước
+      >
+        <Text style={{ color: "#ef4444", fontWeight: "bold" }}>⬅ Back</Text>
+      </Pressable>
       <Text style={styles.title}>📷 Quản lý QR Code</Text>
 
       {/* FORM TẠO QR */}
