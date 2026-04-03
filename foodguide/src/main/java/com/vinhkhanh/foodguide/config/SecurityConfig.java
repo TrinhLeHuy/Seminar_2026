@@ -65,6 +65,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/audio-guides/**").permitAll()
                         .requestMatchers("/api/qr-codes/**").permitAll()
                         .requestMatchers("/api/business/register").permitAll()
+                        .requestMatchers("/api/business/**").permitAll()
                         .anyRequest().authenticated());
 
         http.authenticationProvider(authenticationProvider());

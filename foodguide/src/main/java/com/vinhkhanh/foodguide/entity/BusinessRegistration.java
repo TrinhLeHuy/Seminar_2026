@@ -26,7 +26,8 @@ public class BusinessRegistration {
     // ===== LOCATION =====
     @Column(nullable = false)
     private String name;
-
+    @Column(nullable = false)
+    private String email;
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     @JoinColumn(name = "user_id", nullable = false)

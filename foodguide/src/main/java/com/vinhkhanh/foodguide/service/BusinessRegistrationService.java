@@ -39,7 +39,7 @@ public class BusinessRegistrationService {
     @Autowired
     private AudioGuideRepository audioRepo;
     @Autowired
-    private BusinessRegistrationRepository repository;
+    private EmailService emailService;
 
     // ================= USER ĐĂNG KÝ =================
     public BusinessRegistration create(BusinessRegistration req, Long userId) {
@@ -54,7 +54,7 @@ public class BusinessRegistrationService {
         req.setCreatedAt(LocalDateTime.now());
 
         System.out.println("READY TO SAVE REGISTRATION: " + req);
-        return repository.save(req);
+        return registrationRepo.save(req);
     }
 
     // ================= ADMIN XEM =================
@@ -62,8 +62,10 @@ public class BusinessRegistrationService {
         return registrationRepo.findByStatus(Status.PENDING);
     }
 
+    // ================= ADMIN DUYỆT =================
     @Transactional
     public void approve(Long id) {
+
         BusinessRegistration reg = registrationRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Not found"));
 
@@ -71,6 +73,7 @@ public class BusinessRegistrationService {
         if (reg.getStatus() != Status.PENDING) {
             throw new RuntimeException("Already processed");
         }
+
         // ===== 1. Tạo Location =====
         User user = reg.getUser(); // lấy entity User trực tiếp
         if (user == null) {
@@ -84,7 +87,7 @@ public class BusinessRegistrationService {
                         .latitude(reg.getLatitude())
                         .longitude(reg.getLongitude())
                         .imageUrl(reg.getImageUrl())
-                        .user(user) // set đối tượng user
+                        .user(user)
                         .build());
 
         // ===== 2. Tạo Food =====
@@ -102,26 +105,51 @@ public class BusinessRegistrationService {
 
         // ===== 3. Update status =====
         reg.setStatus(Status.APPROVED);
-        reg.setApprovedAt(LocalDateTime.now()); // 🔥 thêm field này nếu có
+        reg.setApprovedAt(LocalDateTime.now());
 
         registrationRepo.save(reg);
 
-        // qr
+        // ===== 4. Tạo QR =====
         QRCode qr = QRCode.builder()
                 .qrValue("FOOD" + food.getFoodId())
                 .location(location)
                 .build();
+
         qrRepo.save(qr);
-        // audio
+
+        // ===== 5. Tạo Audio =====
         String audioUrl = reg.getAudioUrl();
         String audioLanguage = reg.getAudioLanguage();
+
         AudioGuide audio = AudioGuide.builder()
                 .audioUrl(audioUrl)
                 .language(audioLanguage)
-                .location(location) // nếu audio liên kết với món ăn
+                .location(location)
                 .build();
 
         audioRepo.save(audio);
+
+        // ===== 6. Gửi email thông báo =====
+        System.out.println("SEND EMAIL TO: " + reg.getEmail());
+        try {
+
+            String email = reg.getEmail();
+
+            String subject = "Quán ăn của bạn đã được duyệt";
+
+            String content = "Xin chào " + user.getUsername() + ",\n\n" +
+                    "Chúc mừng! Quán ăn \"" + reg.getName() + "\" của bạn đã được duyệt.\n\n" +
+                    "Món ăn: " + reg.getFoodNameVi() + "\n" +
+                    "Giá: " + reg.getPrice() + " VND\n\n" +
+                    "Quán của bạn sẽ sớm hiển thị trên ứng dụng.\n\n" +
+                    "Trân trọng.";
+
+            emailService.sendEmail(email, subject, content);
+
+        } catch (Exception e) {
+            // không làm fail transaction nếu email lỗi
+            System.out.println("Send email failed: " + e.getMessage());
+        }
     }
 
     // ================= ADMIN TỪ CHỐI =================
@@ -130,11 +158,39 @@ public class BusinessRegistrationService {
         BusinessRegistration reg = registrationRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn"));
 
+        // kiểm tra trạng thái
         if (reg.getStatus() != Status.PENDING) {
             throw new RuntimeException("Đơn đã được xử lý");
         }
 
+        // cập nhật trạng thái
         reg.setStatus(Status.REJECTED);
+        reg.setApprovedAt(LocalDateTime.now());
+
         registrationRepo.save(reg);
+
+        User user = reg.getUser();
+
+        // ===== gửi email thông báo =====
+        try {
+
+            String email = reg.getEmail();
+
+            String subject = "Quán ăn của bạn đã bị từ chối";
+
+            String content = "Xin chào " + user.getUsername() + ",\n\n" +
+                    "Rất tiếc! Đơn đăng ký quán ăn \"" + reg.getName() + "\" của bạn đã bị từ chối.\n\n" +
+                    "Món ăn đăng ký: " + reg.getFoodNameVi() + "\n" +
+                    "Giá: " + reg.getPrice() + " VND\n\n" +
+                    "Bạn có thể chỉnh sửa thông tin và gửi lại đăng ký.\n\n" +
+                    "Trân trọng.";
+
+            emailService.sendEmail(email, subject, content);
+
+            System.out.println("REJECT EMAIL SENT TO: " + email);
+
+        } catch (Exception e) {
+            System.out.println("Send reject email failed: " + e.getMessage());
+        }
     }
 }
