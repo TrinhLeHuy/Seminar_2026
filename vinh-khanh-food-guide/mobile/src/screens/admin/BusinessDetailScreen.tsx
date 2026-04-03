@@ -14,7 +14,7 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_BASE =
-  Platform.OS === "web" ? "http://localhost:8080" : "http://192.168.2.23:8080";
+  Platform.OS === "web" ? "http://localhost:8080" : "http://172.23.200.235:8080";
 
 export default function BusinessDetailScreen() {
   const route = useRoute();

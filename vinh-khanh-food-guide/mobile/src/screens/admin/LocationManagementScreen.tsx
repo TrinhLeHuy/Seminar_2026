@@ -87,18 +87,16 @@ export default function LocationManagementScreen({ navigation }: any) {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.topRow}>
-        {/* Back Button */}
-        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>⬅ Back</Text>
+        <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Text style={styles.backText}>← Back</Text>
         </Pressable>
 
-        {/* Add Button */}
-        <Pressable
+        <TouchableOpacity
+          style={styles.addButton}
           onPress={() => navigation.navigate("LocationCreate")}
-          style={styles.addBtn}
         >
           <Text style={styles.addText}>+ Add Location</Text>
-        </Pressable>
+        </TouchableOpacity>
       </View>
 
       {/* FlatList với header */}
@@ -168,7 +166,34 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginRight: 10,
   },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    marginTop: 10,
+  },
 
+  backBtn: {
+    padding: 8,
+  },
+
+  backText: {
+    fontSize: 18,
+    color: "blue",
+  },
+
+  addButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+
+  addText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
   deleteButton: {
     backgroundColor: "#e74c3c",
     paddingVertical: 8,
@@ -179,39 +204,5 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontWeight: "600",
-  },
-  topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between", // Back bên trái, Add bên phải
-    alignItems: "center",
-    marginBottom: 16,
-  },
-
-  backBtn: {
-    padding: 8,
-  },
-
-  backText: {
-    color: "#ef4444",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-
-  addBtn: {
-    backgroundColor: "#4CAF50",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-
-  addText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  addButton: {
-    backgroundColor: "green",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 20,
   },
 });
