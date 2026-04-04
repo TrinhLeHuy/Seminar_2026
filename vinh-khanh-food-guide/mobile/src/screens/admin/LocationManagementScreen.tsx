@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Pressable,
 } from "react-native";
 
 export default function LocationManagementScreen({ navigation }: any) {
@@ -85,21 +86,18 @@ export default function LocationManagementScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Nút Add */}
-      <TouchableOpacity
-        style={{
-          padding: 12,
-          backgroundColor: "#4CAF50",
-          alignItems: "center",
-          margin: 12,
-          borderRadius: 8,
-        }}
-        onPress={() => navigation.navigate("LocationCreate")}
-      >
-        <Text style={{ color: "#fff", fontWeight: "bold" }}>
-          + Add Location
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.topRow}>
+        <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Text style={styles.backText}>← Back</Text>
+        </Pressable>
+
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => navigation.navigate("LocationCreate")}
+        >
+          <Text style={styles.addText}>+ Add Location</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* FlatList với header */}
       <FlatList
@@ -168,7 +166,34 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginRight: 10,
   },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    marginTop: 10,
+  },
 
+  backBtn: {
+    padding: 8,
+  },
+
+  backText: {
+    fontSize: 18,
+    color: "blue",
+  },
+
+  addButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+
+  addText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
   deleteButton: {
     backgroundColor: "#e74c3c",
     paddingVertical: 8,
@@ -179,18 +204,5 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontWeight: "600",
-  },
-
-  addButton: {
-    backgroundColor: "green",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-
-  addText: {
-    color: "#fff",
-    textAlign: "center",
-    fontWeight: "bold",
   },
 });

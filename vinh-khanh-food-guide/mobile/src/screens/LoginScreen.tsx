@@ -66,7 +66,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const API_URL =
   Platform.OS === "web"
     ? "http://localhost:8080/api/auth/login"
-    : "http://192.168.2.23:8080/api/auth/login";
+    : "http://172.23.200.235:8080/api/auth/login";
 
 const LoginScreen = ({ navigation }: any) => {
   const [username, setUsername] = useState("");

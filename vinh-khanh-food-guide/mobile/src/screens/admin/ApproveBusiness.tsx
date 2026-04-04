@@ -89,7 +89,7 @@ interface Business {
 }
 
 const API_BASE =
-  Platform.OS === "web" ? "http://localhost:8080" : "http://192.168.2.23:8080";
+  Platform.OS === "web" ? "http://localhost:8080" : "http://172.23.200.235:8080";
 
 export default function ApproveBusinessScreen() {
   const [data, setData] = useState<Business[]>([]);
@@ -198,11 +198,18 @@ export default function ApproveBusinessScreen() {
       }
       style={styles.card}
     >
-      <Image source={{ uri: item.imageUrl }} style={styles.image} />
+      <Image
+        source={{
+          uri: item.imageUrl
+            ? item.imageUrl
+            : "https://via.placeholder.com/150?text=No+Image",
+        }}
+        style={styles.image}
+      />
       <View style={styles.content}>
         <Text style={styles.title}>{item.name}</Text>
         <Text>🍜 {item.foodName}</Text>
-        <Text style={styles.price}>{item.price.toLocaleString()}đ</Text>
+        <Text style={styles.price}>{(item.price || 0).toLocaleString()} đ</Text>
         <Text style={styles.address}>{item.address}</Text>
 
         <View style={styles.row}>
@@ -292,7 +299,8 @@ const styles = StyleSheet.create({
 
   image: {
     width: "100%",
-    height: 160,
+    height: 140,
+    resizeMode: "cover",
   },
 
   content: {
@@ -302,42 +310,55 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "bold",
+    color: "#111827",
+    marginBottom: 4,
+  },
+
+  food: {
+    fontSize: 14,
+    color: "#374151",
+    marginBottom: 4,
   },
 
   price: {
-    color: "red",
+    fontSize: 14,
     fontWeight: "bold",
+    color: "#ef4444",
+    marginBottom: 4,
   },
 
   address: {
-    color: "gray",
+    fontSize: 12,
+    color: "#6b7280",
+    marginBottom: 8,
   },
 
   row: {
     flexDirection: "row",
-    marginTop: 10,
-    gap: 10,
+    justifyContent: "space-between",
+    gap: 8,
   },
 
   approve: {
     flex: 1,
-    backgroundColor: "green",
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: "#10b981", // xanh lá
+    paddingVertical: 10,
+    borderRadius: 10,
     alignItems: "center",
   },
 
   reject: {
     flex: 1,
-    backgroundColor: "red",
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: "#ef4444", // đỏ
+    paddingVertical: 10,
+    borderRadius: 10,
     alignItems: "center",
   },
 
   btnText: {
     color: "#fff",
     fontWeight: "bold",
+    fontSize: 14,
   },
   header: {
     marginBottom: 16,

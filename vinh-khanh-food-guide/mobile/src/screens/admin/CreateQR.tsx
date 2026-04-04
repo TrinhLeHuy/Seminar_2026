@@ -1,62 +1,3 @@
-// import React, { useState } from "react";
-// import {
-//   View,
-//   Text,
-//   TextInput,
-//   Pressable,
-//   StyleSheet,
-// } from "react-native";
-
-// const CreateQR = () => {
-//   const [text, setText] = useState("");
-
-//   const handleCreateQR = () => {
-//     alert("QR đã được tạo cho: " + text);
-//   };
-
-//   return (
-//     <View style={styles.container}>
-//       <Text style={styles.title}>📷 Tạo QR Code</Text>
-
-//       <TextInput
-//         placeholder="Nhập nội dung QR"
-//         value={text}
-//         onChangeText={setText}
-//         style={styles.input}
-//       />
-
-//       <Pressable style={styles.btn} onPress={handleCreateQR}>
-//         <Text style={{ color: "#fff" }}>Tạo QR</Text>
-//       </Pressable>
-//     </View>
-//   );
-// };
-
-// export default CreateQR;
-
-// const styles = StyleSheet.create({
-//   container: { flex: 1, padding: 20 },
-
-//   title: {
-//     fontSize: 24,
-//     fontWeight: "bold",
-//     marginBottom: 20,
-//   },
-
-//   input: {
-//     borderWidth: 1,
-//     padding: 12,
-//     borderRadius: 10,
-//     marginBottom: 15,
-//   },
-
-//   btn: {
-//     backgroundColor: "#ff6b00",
-//     padding: 15,
-//     borderRadius: 10,
-//     alignItems: "center",
-//   },
-// });
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -64,7 +5,6 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  ScrollView,
   FlatList,
   ActivityIndicator,
   Alert,
@@ -72,14 +12,49 @@ import {
 import QRCode from "react-native-qrcode-svg";
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation } from "@react-navigation/native";
+type Location = {
+  locationId: number;
+  name: string;
+};
+type QRCodeItem = {
+  qrId: number;
+  qrValue: string;
+};
 export default function AdminQRCodesScreen() {
-  const [qrValue, setQrValue] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState<any | null>(null);
-  const [qrCodes, setQrCodes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [locations, setLocations] = useState<any[]>([]);
-  const API = "http://192.168.2.23:8080";
+  const navigation = useNavigation();
 
+  const API = "http://172.23.200.235:8080";
+
+  const [qrValue, setQrValue] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [qrCodes, setQrCodes] = useState<QRCodeItem[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // load dữ liệu ban đầu
+  useEffect(() => {
+    fetchQR();
+    fetchLocations();
+  }, []);
+
+  // load QR
+  const fetchQR = async () => {
+    try {
+      setLoading(true);
+
+      const res = await fetch(`${API}/api/qr-codes`);
+      const data = await res.json();
+
+      setQrCodes(data);
+    } catch (err) {
+      console.log(err);
+      Alert.alert("Lỗi tải QR");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // load locations
   const fetchLocations = async () => {
     try {
       const res = await fetch(`${API}/api/locations`);
@@ -91,26 +66,10 @@ export default function AdminQRCodesScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchQR();
-    fetchLocations();
-  }, []);
-  const fetchQR = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${API}/api/qr-codes`);
-      const data = await res.json();
-      setQrCodes(data);
-    } catch {
-      Alert.alert("Lỗi tải QR");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // tạo QR
   const createQR = async () => {
     if (!selectedLocation) {
-      Alert.alert("Chọn location");
+      Alert.alert("Vui lòng chọn location");
       return;
     }
 
@@ -120,16 +79,21 @@ export default function AdminQRCodesScreen() {
     }
 
     try {
-      await fetch(`${API}/api/qr-codes`, {
+      const res = await fetch(`${API}/api/qr-codes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           qrValue: qrValue.trim(),
-          locationId: selectedLocation.locationId,
+          locationId: selectedLocation,
         }),
       });
+
+      if (!res.ok) {
+        Alert.alert("Tạo QR thất bại");
+        return;
+      }
 
       Alert.alert("Tạo QR thành công");
 
@@ -137,12 +101,14 @@ export default function AdminQRCodesScreen() {
       setSelectedLocation(null);
 
       fetchQR();
-      fetchLocations();
-    } catch {
+    } catch (err) {
+      console.log(err);
       Alert.alert("Lỗi tạo QR");
     }
   };
-  const deleteQR = async (id: number) => {
+
+  // xóa QR
+  const deleteQR = async (id: any) => {
     try {
       await fetch(`${API}/api/qr-codes/${id}`, {
         method: "DELETE",
@@ -154,6 +120,7 @@ export default function AdminQRCodesScreen() {
     }
   };
 
+  // render item QR
   const renderItem = ({ item }: any) => (
     <View style={styles.card}>
       <QRCode value={item.qrValue} size={80} />
@@ -173,41 +140,50 @@ export default function AdminQRCodesScreen() {
       </Pressable>
     </View>
   );
-  const navigation = useNavigation();
+
   return (
-    <ScrollView style={styles.container}>
-      <Pressable
-        style={{ marginBottom: 10 }}
-        onPress={() => navigation.goBack()} // quay lại màn trước
-      >
-        <Text style={{ color: "#ef4444", fontWeight: "bold" }}>⬅ Back</Text>
+    <View style={styles.container}>
+      {/* Back button */}
+      <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
+        <Text style={styles.backText}>⬅ Back</Text>
       </Pressable>
+
       <Text style={styles.title}>📷 Quản lý QR Code</Text>
 
-      {/* FORM TẠO QR */}
-      <Picker
-        selectedValue={selectedLocation}
-        onValueChange={(itemValue) => setSelectedLocation(itemValue)}
-      >
-        <Picker.Item label="Chọn location" value={null} />
+      {/* FORM */}
+      <View style={styles.form}>
+        <Text style={styles.label}>Location</Text>
 
-        {locations.map((loc) => (
-          <Picker.Item key={loc.locationId} label={loc.name} value={loc} />
-        ))}
-      </Picker>
-      <Text style={styles.label}>QR Value</Text>
+        <Picker
+          selectedValue={selectedLocation}
+          onValueChange={(value) => setSelectedLocation(value)}
+        >
+          <Picker.Item label="Chọn location" value={null} />
 
-      <TextInput
-        placeholder="VD: VK-OC-001"
-        style={styles.input}
-        value={qrValue}
-        onChangeText={(t) => setQrValue(t.toUpperCase())}
-      />
-      <Pressable style={styles.createBtn} onPress={createQR}>
-        <Text style={styles.btnText}>Tạo QR</Text>
-      </Pressable>
+          {locations.map((loc) => (
+            <Picker.Item
+              key={loc.locationId}
+              label={loc.name}
+              value={loc.locationId}
+            />
+          ))}
+        </Picker>
 
-      {/* DANH SÁCH QR */}
+        <Text style={styles.label}>QR Value</Text>
+
+        <TextInput
+          placeholder="VD: VK-OC-001"
+          style={styles.input}
+          value={qrValue}
+          onChangeText={(t) => setQrValue(t.toUpperCase())}
+        />
+
+        <Pressable style={styles.createBtn} onPress={createQR}>
+          <Text style={styles.btnText}>Tạo QR</Text>
+        </Pressable>
+      </View>
+
+      {/* LIST */}
       <Text style={styles.subtitle}>Danh sách QR</Text>
 
       {loading ? (
@@ -219,7 +195,7 @@ export default function AdminQRCodesScreen() {
           renderItem={renderItem}
         />
       )}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -230,6 +206,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#fafafa",
   },
 
+  backBtn: {
+    marginBottom: 10,
+  },
+
+  backText: {
+    color: "#ef4444",
+    fontWeight: "bold",
+  },
+
   title: {
     fontSize: 24,
     fontWeight: "bold",
@@ -238,8 +223,7 @@ const styles = StyleSheet.create({
 
   subtitle: {
     fontSize: 18,
-    marginTop: 20,
-    marginBottom: 10,
+    marginVertical: 10,
     fontWeight: "bold",
   },
 
@@ -261,11 +245,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     marginBottom: 12,
-  },
-
-  preview: {
-    alignItems: "center",
-    marginVertical: 10,
   },
 
   createBtn: {
@@ -302,17 +281,5 @@ const styles = StyleSheet.create({
 
   deleteText: {
     color: "#fff",
-  },
-  locationItem: {
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-
-  selected: {
-    borderColor: "#9333ea",
-    backgroundColor: "#f3e8ff",
   },
 });

@@ -118,7 +118,7 @@ import {
 const API_URL =
   Platform.OS === "web"
     ? "http://localhost:8080/api/business/register"
-    : "http://192.168.2.23:8080/api/business/register";
+    : "http://172.23.200.235:8080/api/business/register";
 
 export default function RegisterBusinessScreen() {
   const [form, setForm] = useState({
@@ -128,7 +128,7 @@ export default function RegisterBusinessScreen() {
     latitude: "",
     longitude: "",
     imageUrl: "",
-
+    email: "",
     foodName: "",
     foodNameVi: "",
     foodNameEn: "",
@@ -174,6 +174,7 @@ export default function RegisterBusinessScreen() {
         },
         body: JSON.stringify({
           name: form.name,
+          email: form.email,
           description: form.description,
           address: form.address,
           latitude: Number(form.latitude),
@@ -226,6 +227,12 @@ export default function RegisterBusinessScreen() {
           placeholder="Tên quán"
           style={styles.input}
           onChangeText={(v) => handleChange("name", v)}
+        />
+        <TextInput
+          placeholder="Email liên hệ"
+          style={styles.input}
+          keyboardType="email-address"
+          onChangeText={(v) => handleChange("email", v)}
         />
         <TextInput
           placeholder="Địa chỉ"
