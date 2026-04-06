@@ -16,19 +16,34 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const API_BASE =
   Platform.OS === "web" ? "http://localhost:8080" : "http://192.168.2.23:8080";
 
-export default function BusinessDetailScreen() {
-  const route = useRoute();
-  const navigation = useNavigation();
+interface Business {
+  id: number;
+  name: string;
+  address: string;
+  description?: string;
+  foodNameVi?: string;
+  foodNameEn?: string;
+  price?: number;
+  foodImageUrl?: string;
+  foodDescriptionVi?: string;
+  foodDescriptionEn?: string;
+  audioUrl?: string;
+  createdAt?: string;
+  approvedAt?: string;
+}
 
-  const { id } = route.params as { id: number };
-
-  const [business, setBusiness] = useState<any>(null);
+export default function BusinessDetailScreen({
+  businessId,
+  onBack,
+}: {
+  businessId: number;
+  onBack?: () => void;
+}) {
+  const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
 
   const getToken = async () => {
-    if (Platform.OS === "web") {
-      return localStorage.getItem("token");
-    }
+    if (Platform.OS === "web") return localStorage.getItem("token");
     return await AsyncStorage.getItem("token");
   };
 
@@ -36,17 +51,15 @@ export default function BusinessDetailScreen() {
     const fetchDetail = async () => {
       try {
         const token = await getToken();
+        if (!token) return setLoading(false);
 
-        const res = await fetch(`${API_BASE}/api/business/${id}`, {
+        const res = await fetch(`${API_BASE}/api/business/${businessId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const text = await res.text();
+        if (!res.ok) return setLoading(false);
 
-        if (!text) return;
-
-        const data = JSON.parse(text);
-
+        const data: Business = await res.json();
         setBusiness(data);
       } catch (err) {
         console.log(err);
@@ -56,110 +69,203 @@ export default function BusinessDetailScreen() {
     };
 
     fetchDetail();
-  }, []);
+  }, [businessId]);
 
-  if (loading) {
+  if (loading)
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" />
       </View>
     );
-  }
 
-  if (!business) {
+  if (!business)
     return (
       <View style={styles.center}>
         <Text>Không tìm thấy dữ liệu</Text>
       </View>
     );
-  }
 
+  const openAudio = () => {
+    if (business.audioUrl) {
+      Linking.openURL(business.audioUrl).catch(console.log);
+    }
+  };
   return (
-    <ScrollView
-      style={styles.page}
-      contentContainerStyle={{ padding: 16, paddingTop: 0 }}
-    >
-      <View style={styles.container}>
-        {/* BACK BUTTON */}
-        <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>← Quay lại</Text>
-        </Pressable>
-
-        {/* IMAGE
-        <Image
-          source={{
-            uri: business.imageUrl || "https://via.placeholder.com/500",
-          }}
-          style={styles.image}
-        /> */}
-
-        {/* LOCATION INFO */}
-        <View style={styles.card}>
-          <Text style={styles.title}>{business.name}</Text>
-
-          <Text style={styles.address}>📍 {business.address}</Text>
-
-          <Text style={styles.desc}>
-            {business.description || "Chưa có mô tả"}
+    <View style={styles.page}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* HEADER */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Chi tiết quán ăn</Text>
+          <Text style={styles.headerSubtitle}>
+            Thông tin được người dùng đăng ký
           </Text>
         </View>
 
-        {/* FOOD */}
+        {/* BUSINESS INFO */}
         <View style={styles.card}>
-          <Text style={styles.section}>🍜 Thông tin món ăn</Text>
+          <Text style={styles.sectionTitle}>🏪 Thông tin quán</Text>
 
-          <Text>🇻🇳 {business.foodNameVi}</Text>
-          <Text>🇬🇧 {business.foodNameEn}</Text>
+          <View style={styles.infoGrid}>
+            <View style={styles.infoItem}>
+              <Text style={styles.label}>Tên quán</Text>
+              <Text style={styles.value}>{business.name}</Text>
+            </View>
 
-          <Text style={styles.price}>
-            💰 {business.price?.toLocaleString()} đ
-          </Text>
+            <View style={styles.infoItem}>
+              <Text style={styles.label}>Địa chỉ</Text>
+              <Text style={styles.value}>{business.address}</Text>
+            </View>
 
-          <Image
-            source={{
-              uri: business.foodImageUrl || "https://via.placeholder.com/500",
-            }}
-            style={styles.foodImage}
-          />
-
-          <Text style={styles.subTitle}>Mô tả VI</Text>
-          <Text>{business.foodDescriptionVi}</Text>
-
-          <Text style={styles.subTitle}>Description EN</Text>
-          <Text>{business.foodDescriptionEn}</Text>
+            <View style={styles.infoItemFull}>
+              <Text style={styles.label}>Mô tả</Text>
+              <Text style={styles.value}>
+                {business.description || "Chưa có mô tả"}
+              </Text>
+            </View>
+          </View>
         </View>
 
-        {/* AUDIO */}
+        {/* FOOD INFO */}
         <View style={styles.card}>
-          <Text style={styles.section}>🎧 Audio</Text>
+          <Text style={styles.sectionTitle}>🍜 Thông tin món ăn</Text>
 
-          <Text>Language: {business.audioLanguage}</Text>
+          <View style={styles.infoGrid}>
+            <View style={styles.infoItem}>
+              <Text style={styles.label}>Tên món (VI)</Text>
+              <Text style={styles.value}>
+                {business.foodNameVi || "Chưa có"}
+              </Text>
+            </View>
+
+            <View style={styles.infoItem}>
+              <Text style={styles.label}>Food (EN)</Text>
+              <Text style={styles.value}>
+                {business.foodNameEn || "No name"}
+              </Text>
+            </View>
+
+            <View style={styles.infoItem}>
+              <Text style={styles.label}>Giá</Text>
+              <Text style={styles.price}>
+                {business.price
+                  ? business.price.toLocaleString() + " đ"
+                  : "Chưa có"}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <Text style={styles.subTitle}>Mô tả (VI)</Text>
+          <Text style={styles.textBlock}>
+            {business.foodDescriptionVi || "Chưa có mô tả"}
+          </Text>
+
+          <Text style={styles.subTitle}>Description (EN)</Text>
+          <Text style={styles.textBlock}>
+            {business.foodDescriptionEn || "No description"}
+          </Text>
         </View>
 
         {/* TIME */}
         <View style={styles.card}>
-          <Text style={styles.section}>📅 Thời gian</Text>
+          <Text style={styles.sectionTitle}>📅 Thời gian</Text>
 
-          <Text>Created: {business.createdAt}</Text>
-          <Text>Approved: {business.approvedAt || "Chưa duyệt"}</Text>
+          <View style={styles.timeRow}>
+            <Text style={styles.timeLabel}>Created</Text>
+            <Text style={styles.timeValue}>
+              {business.createdAt
+                ? new Date(business.createdAt).toLocaleString()
+                : "N/A"}
+            </Text>
+          </View>
+
+          <View style={styles.timeRow}>
+            <Text style={styles.timeLabel}>Approved</Text>
+            <Text style={styles.timeValue}>
+              {business.approvedAt
+                ? new Date(business.approvedAt).toLocaleString()
+                : "Chưa duyệt"}
+            </Text>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
-
 const styles = StyleSheet.create({
-  page: {
-    flex: 1,
-    backgroundColor: "#f0f2f5",
+  header: {
+    marginBottom: 16,
   },
 
-  container: {
-    maxWidth: 700,
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: "700",
+    color: "#111827",
+  },
+
+  headerSubtitle: {
+    color: "#6b7280",
+    marginTop: 4,
+  },
+
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 16,
+  },
+
+  infoGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 14,
+  },
+
+  infoItem: {
+    width: "48%",
+  },
+
+  infoItemFull: {
     width: "100%",
+  },
+
+  label: {
+    fontSize: 13,
+    color: "#6b7280",
+    marginBottom: 4,
+  },
+
+  value: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#111827",
+  },
+
+  price: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#ef4444",
+  },
+  infoRow: {
+    flexDirection: "row",
+    marginBottom: 8,
+  },
+
+  page: {
+    flex: 1,
+    backgroundColor: "#f5f7fb",
+  },
+
+  content: {
+    padding: 20,
+    paddingBottom: 50,
+    maxWidth: 800,
     alignSelf: "center",
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    width: "100%",
   },
 
   center: {
@@ -168,96 +274,114 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  backBtn: {
-    marginBottom: 12,
-  },
-
-  backText: {
-    color: "#ef4444",
-    fontWeight: "bold",
-    fontSize: 16,
+  heroImage: {
+    width: "100%",
+    height: 260,
+    borderRadius: 20,
+    marginBottom: 16,
   },
 
   card: {
     backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 22,
     marginBottom: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 5,
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 14,
+    elevation: 4,
   },
 
   title: {
     fontSize: 26,
-    fontWeight: "bold",
-    marginBottom: 8,
+    fontWeight: "700",
     color: "#111827",
+    marginBottom: 6,
   },
 
   address: {
-    color: "#6b7280",
     fontSize: 14,
+    color: "#6b7280",
     marginBottom: 12,
   },
 
   desc: {
-    lineHeight: 22,
     fontSize: 15,
+    lineHeight: 22,
     color: "#374151",
   },
 
   section: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 12,
-    color: "#111827",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
-    paddingBottom: 6,
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 14,
+  },
+
+  foodRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 10,
+  },
+
+  foodBadge: {
+    backgroundColor: "#eef2ff",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+
+  foodBadgeText: {
+    fontWeight: "600",
+    color: "#3730a3",
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "#e5e7eb",
+    marginVertical: 14,
   },
 
   subTitle: {
-    fontWeight: "bold",
-    marginTop: 12,
     fontSize: 16,
-    color: "#111827",
+    fontWeight: "700",
+    marginTop: 10,
+    marginBottom: 4,
   },
 
-  price: {
-    color: "#ef4444",
-    fontWeight: "bold",
-    marginVertical: 8,
-    fontSize: 16,
-  },
-
-  foodImage: {
-    width: "100%",
-    height: 200,
-    borderRadius: 12,
-    marginVertical: 10,
-    resizeMode: "cover",
+  textBlock: {
+    fontSize: 15,
+    color: "#374151",
+    lineHeight: 22,
   },
 
   audioBtn: {
-    marginTop: 12,
-    backgroundColor: "#3b82f6",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 22,
+    backgroundColor: "#2563eb",
+    paddingVertical: 14,
+    borderRadius: 30,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    marginBottom: 18,
   },
 
   audioText: {
     color: "#fff",
-    fontWeight: "bold",
     fontSize: 16,
+    fontWeight: "700",
+  },
+
+  timeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 6,
+  },
+
+  timeLabel: {
+    fontWeight: "600",
+    color: "#6b7280",
+  },
+
+  timeValue: {
+    fontWeight: "600",
+    color: "#111827",
   },
 });
