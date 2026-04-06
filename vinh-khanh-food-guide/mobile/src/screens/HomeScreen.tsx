@@ -23,7 +23,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Speech from "expo-speech";
 import { voiceMap } from "../i18n/translations";
 
-const BASE_URL = "http://172.23.200.235:8080";
+const BASE_URL = "http://192.168.2.23:8080";
 const { width } = Dimensions.get("window");
 
 export default function HomeScreen() {

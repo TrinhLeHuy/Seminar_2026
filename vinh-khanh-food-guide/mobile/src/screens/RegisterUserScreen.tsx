@@ -12,11 +12,12 @@ import {
 const API_URL =
   Platform.OS === "web"
     ? "http://localhost:8080/api/auth/register"
-    : "http://172.23.200.235:8080/api/auth/register";
+    : "http://192.168.2.23:8080/api/auth/register";
 
 export default function RegisterUserScreen({ navigation }: any) {
   const [form, setForm] = useState({
     username: "",
+    email: "",
     password: "",
     confirmPassword: "",
   });
@@ -35,7 +36,16 @@ export default function RegisterUserScreen({ navigation }: any) {
       setError("Vui lòng nhập đầy đủ thông tin");
       return;
     }
+    if (!form.email) {
+      setError("Vui lòng nhập email");
+      return;
+    }
 
+    const emailRegex = /\S+@\S+\.\S+/;
+    if (!emailRegex.test(form.email)) {
+      setError("Email không hợp lệ");
+      return;
+    }
     if (form.password.length < 6) {
       setError("Mật khẩu phải >= 6 ký tự");
       return;
@@ -56,6 +66,7 @@ export default function RegisterUserScreen({ navigation }: any) {
         },
         body: JSON.stringify({
           username: form.username,
+          email: form.email,
           password: form.password,
           role: "USER",
         }),
@@ -91,6 +102,14 @@ export default function RegisterUserScreen({ navigation }: any) {
           style={styles.input}
           value={form.username}
           onChangeText={(v) => handleChange("username", v)}
+        />
+        <TextInput
+          placeholder="Email"
+          style={styles.input}
+          value={form.email}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          onChangeText={(v) => handleChange("email", v)}
         />
 
         <TextInput

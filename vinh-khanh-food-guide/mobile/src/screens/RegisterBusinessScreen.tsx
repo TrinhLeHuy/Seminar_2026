@@ -114,13 +114,23 @@ import {
   ActivityIndicator,
   Platform,
 } from "react-native";
-
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 const API_URL =
   Platform.OS === "web"
     ? "http://localhost:8080/api/business/register"
-    : "http://172.23.200.235:8080/api/business/register";
-
+    : "http://192.168.2.23:8080/api/business/register";
+type RootStackParamList = {
+  Login: undefined; // màn Login không có params
+  Register: undefined;
+  Home: undefined;
+  // các màn khác nếu có
+};
+type RegisterScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Register"
+>;
 export default function RegisterBusinessScreen() {
+  const navigation = useNavigation<RegisterScreenNavigationProp>();
   const [form, setForm] = useState({
     name: "",
     address: "",
@@ -128,11 +138,8 @@ export default function RegisterBusinessScreen() {
     latitude: "",
     longitude: "",
     imageUrl: "",
-    email: "",
-    foodName: "",
     foodNameVi: "",
     foodNameEn: "",
-    foodDescription: "",
     foodDescriptionVi: "",
     foodDescriptionEn: "",
     price: "",
@@ -148,7 +155,7 @@ export default function RegisterBusinessScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!form.name || !form.foodName || !form.price) {
+    if (!form.name || !form.foodNameVi || !form.price) {
       alert("❌ Vui lòng nhập đủ thông tin bắt buộc");
       return;
     }
@@ -174,17 +181,13 @@ export default function RegisterBusinessScreen() {
         },
         body: JSON.stringify({
           name: form.name,
-          email: form.email,
           description: form.description,
           address: form.address,
           latitude: Number(form.latitude),
           longitude: Number(form.longitude),
           imageUrl: form.imageUrl,
-
-          foodName: form.foodName,
           foodNameVi: form.foodNameVi,
           foodNameEn: form.foodNameEn,
-          foodDescription: form.foodDescription,
           foodDescriptionVi: form.foodDescriptionVi,
           foodDescriptionEn: form.foodDescriptionEn,
           price: Number(form.price),
@@ -200,6 +203,9 @@ export default function RegisterBusinessScreen() {
       }
 
       alert("🎉 Đăng ký thành công!");
+      setTimeout(() => {
+        navigation.navigate("Login");
+      }, 100); // delay 0.1s để alert hiện trước
     } catch (err: any) {
       console.error("Error registering business:", err);
       alert("❌ Lỗi: " + err.message);
@@ -207,7 +213,6 @@ export default function RegisterBusinessScreen() {
       setLoading(false);
     }
   };
-  const navigation = useNavigation();
   return (
     <ScrollView style={styles.container}>
       <Pressable
@@ -228,12 +233,7 @@ export default function RegisterBusinessScreen() {
           style={styles.input}
           onChangeText={(v) => handleChange("name", v)}
         />
-        <TextInput
-          placeholder="Email liên hệ"
-          style={styles.input}
-          keyboardType="email-address"
-          onChangeText={(v) => handleChange("email", v)}
-        />
+
         <TextInput
           placeholder="Địa chỉ"
           style={styles.input}
@@ -269,12 +269,6 @@ export default function RegisterBusinessScreen() {
         {/* FOOD */}
         <Text style={styles.section}>🍽️ Món ăn</Text>
 
-        <TextInput
-          placeholder="Tên món"
-          style={styles.input}
-          onChangeText={(v) => handleChange("foodName", v)}
-        />
-
         <View style={styles.row}>
           <TextInput
             placeholder="Tên VI"
@@ -287,13 +281,6 @@ export default function RegisterBusinessScreen() {
             onChangeText={(v) => handleChange("foodNameEn", v)}
           />
         </View>
-
-        <TextInput
-          placeholder="Mô tả món"
-          style={styles.input}
-          multiline
-          onChangeText={(v) => handleChange("foodDescription", v)}
-        />
 
         <View style={styles.row}>
           <TextInput

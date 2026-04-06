@@ -1,378 +1,256 @@
-// import React, { useState } from "react";
-// import { View, Text, Pressable, StyleSheet, FlatList } from "react-native";
-
-// const ApproveBusiness = () => {
-//   const [businesses, setBusinesses] = useState([
-//     { id: 1, name: "Quán Bún Bò Huế" },
-//     { id: 2, name: "Phở Hà Nội 24h" },
-//   ]);
-
-//   const handleApprove = (id: number) => {
-//     alert("Đã duyệt!");
-//     setBusinesses(businesses.filter((b) => b.id !== id));
-//   };
-
-//   return (
-//     <View style={styles.container}>
-//       <Text style={styles.title}>📋 Duyệt doanh nghiệp</Text>
-
-//       <FlatList
-//         data={businesses}
-//         keyExtractor={(item) => item.id.toString()}
-//         renderItem={({ item }) => (
-//           <View style={styles.card}>
-//             <Text>{item.name}</Text>
-
-//             <Pressable
-//               style={styles.btn}
-//               onPress={() => handleApprove(item.id)}
-//             >
-//               <Text style={{ color: "#fff" }}>Duyệt</Text>
-//             </Pressable>
-//           </View>
-//         )}
-//       />
-//     </View>
-//   );
-// };
-
-// export default ApproveBusiness;
-
-// const styles = StyleSheet.create({
-//   container: { flex: 1, padding: 20 },
-
-//   title: {
-//     fontSize: 24,
-//     fontWeight: "bold",
-//     marginBottom: 20,
-//   },
-
-//   card: {
-//     padding: 15,
-//     backgroundColor: "#eee",
-//     borderRadius: 10,
-//     marginBottom: 10,
-//   },
-
-//   btn: {
-//     marginTop: 10,
-//     backgroundColor: "green",
-//     padding: 10,
-//     borderRadius: 8,
-//     alignItems: "center",
-//   },
-// });
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
-import { useNavigation } from "@react-navigation/native";
 import {
+  SafeAreaView,
   View,
   Text,
   StyleSheet,
-  FlatList,
-  Image,
   Pressable,
+  ScrollView,
+  Dimensions,
   ActivityIndicator,
-  Alert,
-  Platform,
 } from "react-native";
-import { StackNavigationProp } from "@react-navigation/stack";
-import { RootStackParamList } from "../navigation/types";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
 interface Business {
   id: number;
   name: string;
-  imageUrl: string;
-  foodName: string;
+  foodNameVi: string;
   price: number;
   address: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
 }
 
-const API_BASE =
-  Platform.OS === "web" ? "http://localhost:8080" : "http://172.23.200.235:8080";
+interface Column {
+  key: keyof Business | "actions" | "detail";
+  label: string;
+  flex?: number; // thêm prop flex cho cột
+}
+
+const columns: Column[] = [
+  { key: "name", label: "Tên quán", flex: 2 },
+  { key: "foodNameVi", label: "Món ăn", flex: 2 },
+  { key: "price", label: "Giá", flex: 1 },
+  { key: "address", label: "Địa chỉ", flex: 2 },
+  { key: "status", label: "Trạng thái", flex: 1 },
+  { key: "actions", label: "Hành động", flex: 2 },
+  { key: "detail", label: "Xem chi tiết", flex: 1 },
+];
 
 export default function ApproveBusinessScreen() {
-  const [data, setData] = useState<Business[]>([]);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
 
+  // Load token
   useEffect(() => {
-    fetchPending();
+    const loadToken = async () => {
+      const t = await AsyncStorage.getItem("token");
+      setToken(t);
+    };
+    loadToken();
   }, []);
-  type NavigationProp = StackNavigationProp<
-    RootStackParamList,
-    "ApproveBusinessScreen"
-  >;
-  const getToken = async (): Promise<string | null> => {
-    if (Platform.OS === "web") {
-      return localStorage.getItem("token");
-    } else {
-      return await AsyncStorage.getItem("token");
-    }
-  };
 
-  const fetchPending = async () => {
-    try {
-      const token = await getToken();
-
-      console.log("TOKEN:", token);
-
-      const res = await fetch(`${API_BASE}/api/business/pending`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const json = await res.json();
-
-      console.log("PENDING DATA:", json);
-
-      setData(json);
-    } catch (err) {
-      console.log("FETCH ERROR", err);
-      Alert.alert("Lỗi tải dữ liệu");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const approve = async (id: number) => {
-    console.log("APPROVE FUNCTION RUN:", id);
-
-    try {
-      const token = await getToken();
-
-      const res = await fetch(`${API_BASE}/api/business/approve/${id}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const text = await res.text();
-
-      console.log("APPROVE RESPONSE:", text);
-
-      if (!res.ok) {
-        throw new Error(text);
+  // Fetch data
+  useEffect(() => {
+    if (!token) return;
+    const fetchBusinesses = async () => {
+      try {
+        const res = await fetch(
+          "http://192.168.2.23:8080/api/business/pending",
+          {
+            headers: {
+              Authorization: "Bearer " + token,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        const data = await res.json();
+        if (Array.isArray(data)) setBusinesses(data);
+        else console.warn("Dữ liệu trả về không phải mảng:", data);
+      } catch (err) {
+        console.error("Lỗi fetch businesses:", err);
+      } finally {
+        setLoading(false);
       }
+    };
+    fetchBusinesses();
+  }, [token]);
 
-      setData((prev) => prev.filter((b) => b.id !== id));
+  const handleApprove = (id: number) =>
+    setBusinesses((prev) => prev.filter((b) => b.id !== id));
+  const handleReject = (id: number) =>
+    setBusinesses((prev) => prev.filter((b) => b.id !== id));
+  const handleViewDetail = (id: number) => alert(`Xem chi tiết quán ${id}`);
 
-      Alert.alert("✅ Đã duyệt quán");
-    } catch (err) {
-      console.log("APPROVE ERROR:", err);
-      Alert.alert("Duyệt thất bại");
+  const getStatusColor = (status: Business["status"]) => {
+    switch (status) {
+      case "APPROVED":
+        return "#10b981";
+      case "REJECTED":
+        return "#ef4444";
+      default:
+        return "#f59e0b";
     }
   };
+  const renderCell = (item: Business, col: Column) => {
+    const commonStyle = [styles.cell, { flex: col.flex ?? 1 }];
 
-  const reject = async (id: number) => {
-    console.log("REJECT FUNCTION RUN:", id);
+    switch (col.key) {
+      case "actions":
+        return (
+          <View key={col.key} style={[...commonStyle, styles.actions]}>
+            <Pressable
+              style={styles.approve}
+              onPress={() => handleApprove(item.id)}
+            >
+              <Text style={styles.btnText}>Duyệt</Text>
+            </Pressable>
+            <Pressable
+              style={styles.reject}
+              onPress={() => handleReject(item.id)}
+            >
+              <Text style={styles.btnText}>Từ chối</Text>
+            </Pressable>
+          </View>
+        );
 
-    try {
-      const token = await getToken();
-
-      const res = await fetch(`${API_BASE}/api/business/reject/${id}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error("Reject failed");
-      }
-
-      setData((prev) => prev.filter((b) => b.id !== id));
-
-      Alert.alert("❌ Đã từ chối");
-    } catch (err) {
-      console.log(err);
-      Alert.alert("Từ chối thất bại");
-    }
-  };
-  const navigation = useNavigation<NavigationProp>();
-  const renderItem = ({ item }: { item: Business }) => (
-    <Pressable
-      onPress={() =>
-        navigation.navigate("BusinessDetailScreen", { id: item.id })
-      }
-      style={styles.card}
-    >
-      <Image
-        source={{
-          uri: item.imageUrl
-            ? item.imageUrl
-            : "https://via.placeholder.com/150?text=No+Image",
-        }}
-        style={styles.image}
-      />
-      <View style={styles.content}>
-        <Text style={styles.title}>{item.name}</Text>
-        <Text>🍜 {item.foodName}</Text>
-        <Text style={styles.price}>{(item.price || 0).toLocaleString()} đ</Text>
-        <Text style={styles.address}>{item.address}</Text>
-
-        <View style={styles.row}>
+      case "detail":
+        return (
           <Pressable
-            style={styles.approve}
-            onPress={(e) => {
-              e.stopPropagation(); // ngăn click card bị trigger
-              approve(item.id);
-            }}
+            key={col.key}
+            style={[...commonStyle, styles.detail]}
+            onPress={() => handleViewDetail(item.id)}
           >
-            <Text style={styles.btnText}>Duyệt</Text>
+            <Text style={styles.btnText}>Xem chi tiết</Text>
           </Pressable>
+        );
 
-          <Pressable
-            style={styles.reject}
-            onPress={(e) => {
-              e.stopPropagation(); // ngăn click card bị trigger
-              reject(item.id);
-            }}
+      case "status":
+        return (
+          <Text
+            key={col.key}
+            style={[
+              ...commonStyle,
+              { color: getStatusColor(item.status), fontWeight: "bold" },
+            ]}
           >
-            <Text style={styles.btnText}>Từ chối</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Pressable>
-  );
+            {item.status}
+          </Text>
+        );
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
+      case "price":
+        return (
+          <Text key={col.key} style={[...commonStyle, { textAlign: "left" }]}>
+            {item.price.toLocaleString()} đ
+          </Text>
+        );
+
+      default:
+        return (
+          <Text key={col.key} style={commonStyle}>
+            {item[col.key as keyof Business]}
+          </Text>
+        );
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <Pressable
-        style={{ marginBottom: 10 }}
-        onPress={() => navigation.goBack()} // quay lại màn trước
-      >
-        <Text style={{ color: "#ef4444", fontWeight: "bold" }}>⬅ Back</Text>
-      </Pressable>
-      {/* Header */}
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>🛠️ Duyệt quán ăn</Text>
         <Text style={styles.headerSubtitle}>
-          Xem danh sách các quán đang chờ phê duyệt
+          Danh sách các quán đang chờ phê duyệt
         </Text>
       </View>
 
-      {/* List */}
-      <FlatList
-        data={data}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 20 }}
-        ListEmptyComponent={
-          <View style={{ alignItems: "center", marginTop: 40 }}>
-            <Text>Không có quán chờ duyệt</Text>
+      {loading ? (
+        <View style={styles.loading}>
+          <ActivityIndicator size="small" color="#3b82f6" />
+          <Text>Đang tải dữ liệu...</Text>
+        </View>
+      ) : (
+        <ScrollView style={{ flex: 1 }}>
+          <View style={styles.tableContainer}>
+            {/* Header */}
+            <View style={[styles.row, styles.tableHeader]}>
+              {columns.map((col) => (
+                <Text
+                  key={col.key}
+                  style={[styles.cell, { flex: col.flex ?? 1 }]}
+                >
+                  {col.label}
+                </Text>
+              ))}
+            </View>
+            {/* Data */}
+            {businesses.length === 0 ? (
+              <View style={styles.noData}>
+                <Text>Không có quán chờ duyệt</Text>
+              </View>
+            ) : (
+              businesses.map((item) => (
+                <View key={item.id} style={styles.row}>
+                  {columns.map((col) => renderCell(item, col))}
+                </View>
+              ))
+            )}
           </View>
-        }
-      />
-    </View>
+        </ScrollView>
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1, backgroundColor: "#f9fafb" },
+  header: {
     padding: 16,
-  },
-
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  card: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    marginBottom: 16,
-    overflow: "hidden",
-    elevation: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
   },
-
-  image: {
-    width: "100%",
-    height: 140,
-    resizeMode: "cover",
-  },
-
-  content: {
-    padding: 12,
-  },
-
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#111827",
-    marginBottom: 4,
-  },
-
-  food: {
-    fontSize: 14,
-    color: "#374151",
-    marginBottom: 4,
-  },
-
-  price: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#ef4444",
-    marginBottom: 4,
-  },
-
-  address: {
-    fontSize: 12,
-    color: "#6b7280",
-    marginBottom: 8,
-  },
-
+  headerTitle: { fontSize: 24, fontWeight: "bold", color: "#111827" },
+  headerSubtitle: { fontSize: 14, color: "#6b7280", marginTop: 4 },
+  tableContainer: { flex: 1, margin: 8 },
   row: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-
-  approve: {
-    flex: 1,
-    backgroundColor: "#10b981", // xanh lá
-    paddingVertical: 10,
-    borderRadius: 10,
+    borderBottomWidth: 1,
+    borderColor: "#e5e7eb",
+    paddingVertical: 12,
     alignItems: "center",
   },
-
-  reject: {
-    flex: 1,
-    backgroundColor: "#ef4444", // đỏ
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-
-  btnText: {
-    color: "#fff",
-    fontWeight: "bold",
+  tableHeader: { backgroundColor: "#f3f4f6" },
+  cell: {
+    paddingHorizontal: 8,
     fontSize: 14,
-  },
-  header: {
-    marginBottom: 16,
-  },
-
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: "bold",
     color: "#111827",
+    textAlign: "left",
+  }, // <-- sửa đây
+  actions: { flexDirection: "row" },
+  approve: {
+    backgroundColor: "#10b981",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginRight: 2,
   },
-
-  headerSubtitle: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginTop: 4,
+  reject: {
+    backgroundColor: "#ef4444",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginLeft: 0,
   },
+  detail: {
+    backgroundColor: "#3b82f6",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  btnText: { color: "#fff", fontWeight: "bold", fontSize: 12 },
+  loading: { padding: 20, alignItems: "center" },
+  noData: { padding: 20, alignItems: "center" },
 });

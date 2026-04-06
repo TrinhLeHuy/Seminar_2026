@@ -14,7 +14,7 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_BASE =
-  Platform.OS === "web" ? "http://localhost:8080" : "http://172.23.200.235:8080";
+  Platform.OS === "web" ? "http://localhost:8080" : "http://192.168.2.23:8080";
 
 export default function BusinessDetailScreen() {
   const route = useRoute();
@@ -151,13 +151,15 @@ export default function BusinessDetailScreen() {
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f0f2f5",
   },
 
   container: {
     maxWidth: 700,
-    alignSelf: "center",
     width: "100%",
+    alignSelf: "center",
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
 
   center: {
@@ -167,7 +169,7 @@ const styles = StyleSheet.create({
   },
 
   backBtn: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
 
   backText: {
@@ -176,74 +178,86 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  image: {
-    width: "100%",
-    height: 220,
-    borderRadius: 10,
-    marginBottom: 8,
-  },
-
   card: {
-    backgroundColor: "white",
-    padding: 16,
-    borderRadius: 10,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 16,
     shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-    marginTop: 4,
+    shadowRadius: 6,
+    elevation: 5,
   },
 
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "bold",
-    marginBottom: 6,
+    marginBottom: 8,
+    color: "#111827",
   },
 
   address: {
-    color: "#666",
-    marginBottom: 10,
+    color: "#6b7280",
+    fontSize: 14,
+    marginBottom: 12,
   },
 
   desc: {
-    lineHeight: 20,
+    lineHeight: 22,
+    fontSize: 15,
+    color: "#374151",
   },
 
   section: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 12,
+    color: "#111827",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+    paddingBottom: 6,
   },
 
   subTitle: {
     fontWeight: "bold",
-    marginTop: 10,
+    marginTop: 12,
+    fontSize: 16,
+    color: "#111827",
   },
 
   price: {
-    color: "red",
+    color: "#ef4444",
     fontWeight: "bold",
     marginVertical: 8,
+    fontSize: 16,
   },
 
   foodImage: {
     width: "100%",
-    height: 180,
-    borderRadius: 8,
+    height: 200,
+    borderRadius: 12,
     marginVertical: 10,
+    resizeMode: "cover",
   },
 
   audioBtn: {
-    marginTop: 10,
-    backgroundColor: "#ef4444",
-    padding: 12,
-    borderRadius: 8,
+    marginTop: 12,
+    backgroundColor: "#3b82f6",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 22,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   audioText: {
-    color: "white",
+    color: "#fff",
     fontWeight: "bold",
+    fontSize: 16,
   },
 });
