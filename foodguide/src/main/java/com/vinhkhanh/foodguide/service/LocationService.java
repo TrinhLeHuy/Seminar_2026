@@ -46,7 +46,23 @@ public class LocationService {
         return convertToDetailDTO(qrCode.getLocation());
     }
 
+    // public LocationDTO createLocation(LocationRequest request, Long userId) {
+    // User user = userRepository.findById(userId)
+    // .orElseThrow(() -> new RuntimeException("User not found"));
+
+    // Location location = new Location();
+    // location.setName(request.getName());
+    // location.setDescription(request.getDescription());
+    // location.setLatitude(request.getLatitude());
+    // location.setLongitude(request.getLongitude());
+    // location.setImageUrl(request.getImageUrl());
+    // location.setUser(user);
+
+    // Location saved = locationRepository.save(location);
+    // return convertToDTO(saved);
+    // }
     public LocationDTO createLocation(LocationRequest request, Long userId) {
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -58,7 +74,41 @@ public class LocationService {
         location.setImageUrl(request.getImageUrl());
         location.setUser(user);
 
+        // MAP FOODS
+        if (request.getFoods() != null) {
+            List<Food> foods = request.getFoods().stream()
+                    .map(f -> {
+                        Food food = new Food();
+
+                        food.setNameVi(f.getNameVi());
+                        food.setNameEn(f.getNameEn());
+                        food.setDescriptionVi(f.getDescriptionVi());
+                        food.setDescriptionEn(f.getDescriptionEn());
+                        food.setPrice(f.getPrice());
+                        food.setImageUrl(f.getImageUrl());
+                        food.setLocation(location); // liên kết
+                        return food;
+                    })
+                    .toList();
+            location.setFoods(foods);
+        }
+
+        // Thêm audioGuides
+        if (request.getAudioGuides() != null) {
+            List<AudioGuide> audioGuides = request.getAudioGuides().stream()
+                    .map(a -> {
+                        AudioGuide audio = new AudioGuide();
+                        audio.setAudioUrl(a.getAudioUrl());
+                        audio.setLanguage(a.getLanguage());
+                        audio.setLocation(location); // liên kết
+                        return audio;
+                    })
+                    .toList();
+            location.setAudioGuides(audioGuides);
+        }
+
         Location saved = locationRepository.save(location);
+
         return convertToDTO(saved);
     }
 
@@ -146,9 +196,12 @@ public class LocationService {
     private FoodDTO convertFoodToDTO(Food food) {
         FoodDTO dto = new FoodDTO();
         dto.setFoodId(food.getFoodId());
-        dto.setName(food.getNameVi());
+        dto.setNameVi(food.getNameVi());
+        dto.setNameEn(food.getNameEn());
         dto.setPrice(food.getPrice());
-        dto.setDescription(food.getDescriptionVi());
+        dto.setDescriptionVi(food.getDescriptionVi());
+        dto.setDescriptionEn(food.getDescriptionEn());
+        dto.setImageUrl(food.getImageUrl());
         dto.setLocationId(food.getLocation().getLocationId());
         return dto;
     }
@@ -169,4 +222,5 @@ public class LocationService {
         dto.setLocationId(qrCode.getLocation().getLocationId());
         return dto;
     }
+
 }

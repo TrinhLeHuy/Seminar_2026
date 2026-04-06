@@ -10,9 +10,11 @@ import lombok.NoArgsConstructor;
 public class FoodDTO {
 
     private Long foodId;
-    private String name;
+    private String nameVi;
+    private String nameEn;
     private Double price;
-    private String description;
+    private String descriptionVi;
+    private String descriptionEn;
     private String imageUrl;
     private Long locationId;
 }

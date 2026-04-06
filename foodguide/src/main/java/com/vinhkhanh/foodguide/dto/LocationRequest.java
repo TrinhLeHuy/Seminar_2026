@@ -1,5 +1,7 @@
 package com.vinhkhanh.foodguide.dto;
 
+import java.util.List;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -18,4 +20,6 @@ public class LocationRequest {
     private Double longitude;
 
     private String imageUrl;
+    private List<FoodRequest> foods;
+    private List<AudioGuideRequest> audioGuides;
 }

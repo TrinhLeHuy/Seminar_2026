@@ -133,7 +133,7 @@ public class BusinessRegistrationService {
         System.out.println("SEND EMAIL TO: " + reg.getEmail());
         try {
 
-            String email = reg.getEmail();
+            String email = user.getEmail();
 
             String subject = "Quán ăn của bạn đã được duyệt";
 

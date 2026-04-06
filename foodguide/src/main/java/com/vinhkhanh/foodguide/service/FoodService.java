@@ -35,8 +35,7 @@ public class FoodService {
     public FoodDTO getFoodById(Long id, String lang) {
 
         Food food = foodRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Food not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Food not found with id: " + id));
 
         return convertToDTO(food, lang);
     }
@@ -54,8 +53,7 @@ public class FoodService {
     public FoodDTO createFood(FoodRequest request) {
 
         Location location = locationRepository.findById(request.getLocationId())
-                .orElseThrow(() ->
-                        new RuntimeException("Location not found"));
+                .orElseThrow(() -> new RuntimeException("Location not found"));
 
         Food food = new Food();
 
@@ -76,12 +74,10 @@ public class FoodService {
     public FoodDTO updateFood(Long id, FoodRequest request) {
 
         Food food = foodRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Food not found"));
+                .orElseThrow(() -> new RuntimeException("Food not found"));
 
         Location location = locationRepository.findById(request.getLocationId())
-                .orElseThrow(() ->
-                        new RuntimeException("Location not found"));
+                .orElseThrow(() -> new RuntimeException("Location not found"));
 
         food.setNameVi(request.getNameVi());
         food.setNameEn(request.getNameEn());
@@ -115,15 +111,6 @@ public class FoodService {
         dto.setPrice(food.getPrice());
         dto.setImageUrl(food.getImageUrl());
         dto.setLocationId(food.getLocation().getLocationId());
-
-        if ("en".equals(lang)) {
-            dto.setName(food.getNameEn());
-            dto.setDescription(food.getDescriptionEn());
-        } else {
-            dto.setName(food.getNameVi());
-            dto.setDescription(food.getDescriptionVi());
-        }
-
         return dto;
     }
 }
