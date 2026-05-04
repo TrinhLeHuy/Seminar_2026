@@ -18,7 +18,7 @@ import MapComponent from "../components/Map";
 import QRScannerMobile from "../components/QRScanner.native";
 import QRScannerWeb from "../components/QRScanner.web";
 
-const BASE_URL = "http://192.168.2.23:8080";
+const BASE_URL = "http://172.23.200.167:8080";
 
 export default function QRScannerScreen() {
   const { lang } = useLanguage();
@@ -50,7 +50,7 @@ export default function QRScannerScreen() {
     if (!selectedLocation || !foods.length) return;
 
     const food = foods.find(
-      (f) => String(f.locationId) === String(selectedLocation.locationId)
+      (f) => String(f.locationId) === String(selectedLocation.locationId),
     );
 
     setSelectedFood(food);
@@ -187,9 +187,7 @@ export default function QRScannerScreen() {
 
               <Text style={styles.title}>{selectedFood.name}</Text>
 
-              <Text style={styles.desc}>
-                {selectedFood.description}
-              </Text>
+              <Text style={styles.desc}>{selectedFood.description}</Text>
 
               <Pressable style={styles.audioBtn} onPress={toggleAudio}>
                 <Ionicons

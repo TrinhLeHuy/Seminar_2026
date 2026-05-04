@@ -118,7 +118,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 const API_URL =
   Platform.OS === "web"
     ? "http://localhost:8080/api/business/register"
-    : "http://192.168.2.23:8080/api/business/register";
+    : "http://172.23.200.167:8080/api/business/register";
 type RootStackParamList = {
   Login: undefined; // màn Login không có params
   Register: undefined;

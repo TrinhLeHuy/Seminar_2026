@@ -26,7 +26,7 @@ export default function QRLogs() {
   const [scansByHour, setScansByHour] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
-  const API = "http://192.168.2.23:8080/api/qr-scan/logs";
+  const API = "http://172.23.200.167:8080/api/qr-scan/logs";
 
   useEffect(() => {
     fetch(API)

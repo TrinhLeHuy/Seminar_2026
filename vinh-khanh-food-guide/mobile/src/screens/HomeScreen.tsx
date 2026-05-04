@@ -2,16 +2,13 @@ import {
   ScrollView,
   Text,
   View,
-  Image,
   Pressable,
   StyleSheet,
-  TextInput,
   ActivityIndicator,
-  Dimensions,
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import Header from "../components/Header";
 import MapComponent from "../components/Map";
@@ -19,25 +16,46 @@ import { useLanguage } from "../i18n/LanguageContext";
 import { getLocations } from "../api/location";
 import { getFoods } from "../api/food";
 import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
+import { Image } from "react-native";
+import { getTTS, getText } from "../api/tts";
+import { playAudio, stopAudio } from "../utils/audioPlayer";
 
-import * as Speech from "expo-speech";
-import { voiceMap } from "../i18n/translations";
+// ================= TYPES =================
+type Food = {
+  foodId: number;
+  nameVi?: string;
+  nameEn?: string;
+  descriptionVi?: string;
+  descriptionEn?: string;
+  locationId?: number;
+};
 
-const BASE_URL = "http://192.168.2.23:8080";
-const { width } = Dimensions.get("window");
+type LocationType = {
+  locationId: number;
+  latitude: number;
+  longitude: number;
+  name?: string;
+};
 
+// ================= COMPONENT =================
 export default function HomeScreen() {
+  const gpsStarted = useRef(false);
   const { t, lang } = useLanguage();
+  if (!t || !lang) {
+    return <ActivityIndicator />;
+  }
+  const [locations, setLocations] = useState<LocationType[]>([]);
+  const [foods, setFoods] = useState<Food[]>([]);
 
-  const [locations, setLocations] = useState<any[]>([]);
-  const [foods, setFoods] = useState<any[]>([]);
-  const [selectedFood, setSelectedFood] = useState<any | null>(null);
-  const [selectedLocation, setSelectedLocation] = useState<any | null>(null);
+  const [selectedFood, setSelectedFood] = useState<Food | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<LocationType | null>(
+    null,
+  );
 
+  const [translatedText, setTranslatedText] = useState<string>("...");
   const [loading, setLoading] = useState(true);
-  const [searchText, setSearchText] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioLoading, setAudioLoading] = useState(false);
 
   const [region, setRegion] = useState({
     latitude: 10.742774,
@@ -46,48 +64,129 @@ export default function HomeScreen() {
     longitudeDelta: 0.01,
   });
 
-  // 🚀 FETCH DATA
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+  // ================= CACHE =================
+  const textCache = useRef<Record<string, string>>({});
+  const audioCache = useRef<Record<string, string>>({});
 
-      const locationData = await getLocations(lang);
-      const foodData = await getFoods(lang);
+  const currentLocationRef = useRef<number | null>(null);
+  const userSelectedRef = useRef(false);
 
-      setLocations(locationData);
-      setFoods(foodData);
+  const autoPlay =
+    Platform.OS === "web"
+      ? new URLSearchParams(window.location.search).get("autoPlay")
+      : null;
 
-      if (foodData.length > 0) {
-        setSelectedFood(foodData[0]);
-      }
-
-      if (locationData.length > 0) {
-        setSelectedLocation(locationData[0]);
-      }
-    } catch (error) {
-      console.log("🚫 API lỗi", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // ================= FETCH DATA =================
   useEffect(() => {
+    let isAlive = true;
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        const locationData = await getLocations(lang);
+        const foodData = await getFoods();
+
+        const safeLocations = Array.isArray(locationData) ? locationData : [];
+        const safeFoods = Array.isArray(foodData) ? foodData : [];
+
+        if (!isAlive) return;
+
+        setLocations(safeLocations);
+        setFoods(safeFoods);
+
+        if (safeLocations.length > 0) {
+          const first = safeLocations[0];
+          setSelectedLocation(first);
+
+          const f = safeFoods.find((x) => x.locationId === first.locationId);
+          if (f) setSelectedFood(f);
+        }
+      } catch (e) {
+        console.log("API ERROR", e);
+      } finally {
+        if (isAlive) setLoading(false);
+      }
+    };
+
     fetchData();
-  }, [lang]);
+
+    return () => {
+      isAlive = false;
+    };
+  }, []);
+  const isMounted = useRef(true);
 
   useEffect(() => {
     return () => {
-      if (Platform.OS === "web") {
-        window.speechSynthesis.cancel();
-      } else {
-        Speech.stop();
-      }
+      isMounted.current = false;
     };
   }, []);
+  // ================= LOAD TEXT =================
+  useEffect(() => {
+    if (!selectedLocation) return;
 
-  // 🎯 CHỌN LOCATION (❌ KHÔNG SPEAK)
-  const handleSelectLocation = (item: any) => {
+    let isActive = true;
+
+    const load = async () => {
+      try {
+        const key = `${selectedLocation.locationId}_${lang}`;
+
+        if (textCache.current[key]) {
+          if (isActive) setTranslatedText(textCache.current[key]);
+          return;
+        }
+
+        const text = await getText(selectedLocation.locationId, lang);
+
+        const safeText =
+          typeof text === "string" ? text : JSON.stringify(text ?? "...");
+
+        textCache.current[key] = safeText;
+
+        if (isActive) setTranslatedText(safeText);
+      } catch (e) {
+        console.log("TEXT ERROR", e);
+        if (isActive) setTranslatedText("...");
+      }
+    };
+
+    load();
+
+    return () => {
+      isActive = false;
+    };
+  }, [selectedLocation, lang]);
+
+  // ================= AUDIO =================
+  const playWithCache = async (locationId: number) => {
+    try {
+      const key = `${locationId}_${lang}`;
+
+      let url = audioCache.current[key];
+
+      if (!url) {
+        url = await getTTS(locationId, lang);
+        audioCache.current[key] = url;
+      }
+
+      await stopAudio();
+      await playAudio(url);
+
+      setIsPlaying(true);
+    } catch (e) {
+      console.log("AUDIO ERROR", e);
+    }
+  };
+
+  // ================= SELECT LOCATION =================
+  const handleSelectLocation = async (item: LocationType) => {
+    userSelectedRef.current = true;
+
     setSelectedLocation(item);
+
+    const f = foods.find((x) => x.locationId === item.locationId);
+    if (f) setSelectedFood(f);
 
     setRegion({
       latitude: item.latitude,
@@ -96,98 +195,145 @@ export default function HomeScreen() {
       longitudeDelta: 0.005,
     });
 
-    // ❌ không speak ở đây nữa
-    if (Platform.OS === "web") {
-      window.speechSynthesis.cancel();
-    } else {
-      Speech.stop();
-    }
-
+    await stopAudio();
     setIsPlaying(false);
+
+    currentLocationRef.current = item.locationId;
   };
 
-  // 🔊 SPEAK (WEB + MOBILE)
-  const speakLocation = (item: any, food?: any) => {
-    const text = food?.description || item?.description || item?.name;
+  // ================= GPS AUTO =================
+  useEffect(() => {
+    let sub: any;
 
-    if (!text) return;
+    const getDistance = (
+      lat1: number,
+      lon1: number,
+      lat2: number,
+      lon2: number,
+    ) => {
+      const R = 6371;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
 
-    if (Platform.OS === "web") {
-      if (!("speechSynthesis" in window)) {
-        alert("Browser không hỗ trợ TTS");
-        return;
-      }
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+          Math.cos((lat2 * Math.PI) / 180) *
+          Math.sin(dLon / 2) ** 2;
 
-      window.speechSynthesis.cancel();
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    };
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = voiceMap[lang] || "vi-VN";
+    const findNearestLocation = (
+      userLoc: { latitude: number; longitude: number },
+      list: LocationType[],
+    ): LocationType | null => {
+      let min = Infinity;
+      let nearest: LocationType | null = null;
 
-      setIsPlaying(true);
+      list.forEach((loc) => {
+        const d = getDistance(
+          userLoc.latitude,
+          userLoc.longitude,
+          loc.latitude,
+          loc.longitude,
+        );
 
-      utterance.onend = () => setIsPlaying(false);
-
-      setTimeout(() => {
-        window.speechSynthesis.speak(utterance);
-      }, 100);
-    } else {
-      Speech.stop();
-
-      Speech.speak(text, {
-        language: voiceMap[lang] || "vi-VN",
-        rate: 0.9,
-        onDone: () => setIsPlaying(false),
+        if (d < min) {
+          min = d;
+          nearest = loc;
+        }
       });
 
-      setIsPlaying(true);
-    }
-  };
+      return nearest;
+    };
+    const handleAuto = async (userLoc: {
+      latitude: number;
+      longitude: number;
+    }) => {
+      if (!locations.length) return;
+      if (userSelectedRef.current) return;
 
-  // ▶️ / ⏸ toggle
-  const toggleAudio = () => {
-    if (isPlaying) {
-      if (Platform.OS === "web") {
-        window.speechSynthesis.cancel();
-      } else {
-        Speech.stop();
+      const nearest = findNearestLocation(userLoc, locations);
+      if (!nearest) return;
+
+      const distance = getDistance(
+        userLoc.latitude,
+        userLoc.longitude,
+        nearest.latitude,
+        nearest.longitude,
+      );
+
+      if (autoPlay || distance < 0.05) {
+        if (currentLocationRef.current === nearest.locationId) return;
+
+        currentLocationRef.current = nearest.locationId;
+
+        setSelectedLocation(nearest);
+
+        const f = foods.find((x) => x.locationId === nearest.locationId);
+        if (f) setSelectedFood(f);
+
+        setRegion({
+          latitude: nearest.latitude,
+          longitude: nearest.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        });
+
+        await playWithCache(nearest.locationId);
       }
-      setIsPlaying(false);
-    } else {
-      speakLocation(selectedLocation, selectedFood);
-    }
-  };
+    };
 
-  const loadAndPlayAudio = () => {
+    const start = async () => {
+      if (gpsStarted.current) return; // 🔥 CHẶN DOUBLE START
+      gpsStarted.current = true;
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return;
+
+      const current = await Location.getCurrentPositionAsync({});
+      await handleAuto(current.coords);
+
+      sub = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 3000,
+          distanceInterval: 5,
+        },
+        (loc) => handleAuto(loc.coords),
+      );
+    };
+    if (locations.length > 0 && selectedLocation) {
+      start();
+    }
+
+    return () => {
+      try {
+        sub?.remove?.();
+      } catch (e) {
+        console.log("GPS cleanup ignored:", e);
+      }
+    };
+  }, [locations]);
+
+  // ================= AUDIO CONTROL =================
+  const toggleAudio = async () => {
     if (!selectedLocation) return;
 
-    setAudioLoading(true);
-
-    setTimeout(() => {
-      speakLocation(selectedLocation, selectedFood);
-      setAudioLoading(false);
-    }, 300);
+    if (isPlaying) {
+      await stopAudio();
+      setIsPlaying(false);
+    } else {
+      await playWithCache(selectedLocation.locationId);
+    }
   };
-
-  // ✅ FILTER
-  const filteredLocations =
-    selectedFood === null
-      ? locations
-      : locations.filter((l) => l.locationId === selectedFood.locationId);
-
-  // 🔍 SEARCH
-  const finalLocations = filteredLocations.filter((location) =>
-    location.name?.toLowerCase().includes(searchText.toLowerCase()),
-  );
-
-  const getImageUri = (url?: string) =>
-    url?.startsWith("http") ? url : `${BASE_URL}${url}`;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
       <ScrollView>
         <Header />
 
-        {/* BANNER */}
+        {/* ===== BANNER ===== */}
         <Image
           source={{
             uri: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800",
@@ -195,97 +341,64 @@ export default function HomeScreen() {
           style={styles.banner}
         />
 
-        {/* CATEGORY */}
-        <Text style={styles.sectionTitle}>{t.category}</Text>
+        {/* ===== CATEGORY ===== */}
+        <Text style={styles.sectionTitle}>{t?.category ?? "..."}</Text>
 
         <ScrollView horizontal style={{ paddingLeft: 16 }}>
-          {foods.map((food) => {
-            const isActive = selectedFood?.foodId === food.foodId;
+          {foods.map((food) => (
+            <Pressable
+              key={food.foodId}
+              style={[
+                styles.categoryItem,
+                selectedFood?.foodId === food.foodId && styles.activeCategory,
+              ]}
+              onPress={() => {
+                const loc = locations.find(
+                  (l) => l.locationId === food.locationId,
+                );
 
-            return (
-              <Pressable
-                key={food.foodId}
-                style={[styles.categoryItem, isActive && styles.activeCategory]}
-                onPress={() => {
-                  setSelectedFood(food);
-
-                  // ✅ CHỈ SPEAK Ở ĐÂY
-                  if (selectedLocation) {
-                    speakLocation(selectedLocation, food);
-                  }
-                }}
+                setSelectedFood(food);
+                if (loc) handleSelectLocation(loc);
+              }}
+            >
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedFood?.foodId === food.foodId &&
+                    styles.activeCategoryText,
+                ]}
               >
-                <Text
-                  style={[
-                    styles.categoryText,
-                    isActive && styles.activeCategoryText,
-                  ]}
-                >
-                  {food.name}
-                </Text>
-              </Pressable>
-            );
-          })}
+                {food.nameVi || food.nameEn}
+              </Text>
+            </Pressable>
+          ))}
         </ScrollView>
 
-        {/* MAP */}
+        {/* ===== MAP ===== */}
         <View style={styles.mapContainer}>
-          <View style={styles.searchBox}>
-            <TextInput
-              placeholder="Search"
-              value={searchText}
-              onChangeText={setSearchText}
-              style={{ flex: 1 }}
-            />
-          </View>
-
-          {loading ? (
-            <ActivityIndicator size="large" />
+          {loading || !selectedLocation ? (
+            <ActivityIndicator />
           ) : (
             <MapComponent
-              locations={finalLocations}
-              location={selectedLocation || finalLocations[0]}
+              key={selectedLocation?.locationId}
+              locations={Array.isArray(locations) ? locations : []}
+              location={selectedLocation}
               onSelectLocation={handleSelectLocation}
               region={region}
             />
           )}
         </View>
 
-        {/* LIST */}
-        <ScrollView horizontal style={{ marginTop: 10 }}>
-          {finalLocations
-            .filter((item) => item.locationId !== selectedLocation?.locationId)
-            .map((item) => (
-              <Pressable
-                key={item.locationId}
-                style={styles.locationCard}
-                onPress={() => handleSelectLocation(item)}
-              >
-                <Image
-                  source={{ uri: getImageUri(item.imageUrl) }}
-                  style={styles.locationImage}
-                />
-                <Text style={styles.locationName}>{item.name}</Text>
-              </Pressable>
-            ))}
-        </ScrollView>
-
-        {/* INFO */}
+        {/* ===== INFO CARD ===== */}
         {selectedLocation && selectedFood && (
           <View style={styles.infoCard}>
-            <Image
-              source={{ uri: getImageUri(selectedFood.imageUrl) }}
-              style={styles.infoImage}
-            />
+            <Text style={styles.infoTitle}>
+              {selectedFood.nameVi || selectedFood.nameEn}
+            </Text>
 
-            <Text style={styles.infoTitle}>{selectedFood.name}</Text>
+            <Text style={styles.infoDesc}>{translatedText || "..."}</Text>
 
-            <Text style={styles.infoDesc}>{selectedFood.description}</Text>
-
-            <Pressable
-              style={styles.audioButton}
-              onPress={isPlaying ? toggleAudio : loadAndPlayAudio}
-            >
+            <Pressable style={styles.audioButton} onPress={toggleAudio}>
               <Ionicons
                 name={isPlaying ? "pause-circle" : "play-circle"}
                 size={32}
@@ -298,7 +411,6 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   banner: {
     width: "100%",
