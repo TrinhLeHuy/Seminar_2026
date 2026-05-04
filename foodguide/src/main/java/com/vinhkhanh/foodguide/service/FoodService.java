@@ -111,6 +111,24 @@ public class FoodService {
         dto.setPrice(food.getPrice());
         dto.setImageUrl(food.getImageUrl());
         dto.setLocationId(food.getLocation().getLocationId());
+
+        // ✅ xử lý đa ngôn ngữ
+        if ("en".equalsIgnoreCase(lang)) {
+            dto.setNameEn(food.getNameEn());
+            dto.setDescriptionEn(food.getDescriptionEn());
+
+            // fallback nếu en null
+            dto.setNameVi(food.getNameVi());
+            dto.setDescriptionVi(food.getDescriptionVi());
+        } else {
+            dto.setNameVi(food.getNameVi());
+            dto.setDescriptionVi(food.getDescriptionVi());
+
+            // fallback nếu vi null
+            dto.setNameEn(food.getNameEn());
+            dto.setDescriptionEn(food.getDescriptionEn());
+        }
+
         return dto;
     }
 }

@@ -66,6 +66,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/qr-codes/**").permitAll()
                         .requestMatchers("/api/business/register").permitAll()
                         .requestMatchers("/api/business/**").permitAll()
+                        .requestMatchers("/api/tts/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/api/tts/**").permitAll()
                         .anyRequest().authenticated());
 
         http.authenticationProvider(authenticationProvider());
