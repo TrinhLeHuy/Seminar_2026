@@ -118,7 +118,7 @@ import {
 const API_URL =
   Platform.OS === "web"
     ? "http://localhost:8080/api/business/register"
-    : "http://172.23.200.235:8080/api/business/register";
+    : "http://https://dark-pants-glow.loca.lt/api/business/register";
 
 export default function RegisterBusinessScreen() {
   const [form, setForm] = useState({

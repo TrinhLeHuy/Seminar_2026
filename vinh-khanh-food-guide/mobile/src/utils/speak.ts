@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
 import * as Speech from "expo-speech";
 import { voiceMap, Lang } from "../i18n/translations";
-const BASE_URL = "http://192.168.2.23:8080"; 
+const BASE_URL = "https://dark-pants-glow.loca.lt"; 
 
 export const speakText = async (
   text: string,
@@ -14,7 +14,7 @@ export const speakText = async (
 
   if (Platform.OS === "web") {
     try {
-      const res = await fetch(`http://192.168.2.23:8080/api/tts`, {
+      const res = await fetch(`https://dark-pants-glow.loca.lt/api/tts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",       

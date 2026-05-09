@@ -12,7 +12,7 @@ import {
 const API_URL =
   Platform.OS === "web"
     ? "http://localhost:8080/api/auth/register"
-    : "http://172.23.200.235:8080/api/auth/register";
+    : "http://https://dark-pants-glow.loca.lt/api/auth/register";
 
 export default function RegisterUserScreen({ navigation }: any) {
   const [form, setForm] = useState({

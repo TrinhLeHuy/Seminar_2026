@@ -23,7 +23,7 @@ type QRCodeItem = {
 export default function AdminQRCodesScreen() {
   const navigation = useNavigation();
 
-  const API = "http://172.23.200.235:8080";
+  const API = "http://192.168.66.11:8080";
 
   const [qrValue, setQrValue] = useState("");
   const [selectedLocation, setSelectedLocation] = useState(null);

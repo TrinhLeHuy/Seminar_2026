@@ -1,56 +1,3 @@
-// import React, { useState } from "react";
-// import {
-//   View,
-//   Text,
-//   TextInput,
-//   Pressable,
-//   StyleSheet,
-//   ActivityIndicator,
-//   Platform,
-// } from "react-native";
-// import AsyncStorage from "@react-native-async-storage/async-storage";
-// const API_URL =
-//   Platform.OS === "web"
-//     ? "http://localhost:8080/api/auth/login"
-//     : "http://192.168.2.23:8080/api/auth/login";
-
-// const LoginScreen = ({ navigation }: any) => {
-//   const [username, setUsername] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [loading, setLoading] = useState(false);
-
-//   // const handleLogin = async () => {
-//   //   if (!username || !password) {
-//   //     alert("Nhập đầy đủ thông tin");
-//   //     return;
-//   //   }
-
-//   //   try {
-//   //     setLoading(true);
-
-//   //     const res = await fetch(API_URL, {
-//   //       method: "POST",
-//   //       headers: { "Content-Type": "application/json" },
-//   //       body: JSON.stringify({ username, password }),
-//   //     });
-
-//   //     const data = await res.json();
-
-//   //     if (!res.ok) throw new Error();
-
-//   //     alert("Đăng nhập thành công!");
-
-//   //     if (data.role === "ADMIN") {
-//   //       navigation.replace("AdminDashboard");
-//   //     } else {
-//   //       navigation.replace("RegisterBusiness");
-//   //     }
-//   //   } catch {
-//   //     alert("Sai tài khoản hoặc mật khẩu");
-//   //   } finally {
-//   //     setLoading(false);
-//   //   }
-//   // };
 
 import React, { useState } from "react";
 import {
@@ -66,7 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const API_URL =
   Platform.OS === "web"
     ? "http://localhost:8080/api/auth/login"
-    : "http://172.23.200.235:8080/api/auth/login";
+    : "http://192.168.66.11:8080/api/auth/login";
 
 const LoginScreen = ({ navigation }: any) => {
   const [username, setUsername] = useState("");

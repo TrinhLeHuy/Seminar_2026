@@ -18,7 +18,7 @@ import MapComponent from "../components/Map";
 import QRScannerMobile from "../components/QRScanner.native";
 import QRScannerWeb from "../components/QRScanner.web";
 
-const BASE_URL = "http://192.168.2.23:8080";
+const BASE_URL = "https://dark-pants-glow.loca.lt";
 
 export default function QRScannerScreen() {
   const { lang } = useLanguage();

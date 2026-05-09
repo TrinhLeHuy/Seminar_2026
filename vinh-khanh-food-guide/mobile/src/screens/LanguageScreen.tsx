@@ -46,14 +46,17 @@ export default LanguageScreen;
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 50,
+    flex: 1,
+    paddingTop: 50,
     paddingHorizontal: 16,
+    backgroundColor: "#F5F5F5",
   },
   item: {
     padding: 16,
     fontSize: 16,
+    color: "#333", // Ensure text is visible in light/dark mode
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: "#ddd",
   },
   active: {
     color: "#FF3B30",

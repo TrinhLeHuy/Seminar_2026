@@ -77,7 +77,7 @@ export default function QRLogs() {
   const [scansByHour, setScansByHour] = useState<any>({});
   const [loading, setLoading] = useState(true);
 
-  const API = "http://172.23.200.235:8080/api/qr-scan/logs";
+  const API = "https://dark-pants-glow.loca.lt/api/qr-scan/logs";
 
   useEffect(() => {
     fetch(API)

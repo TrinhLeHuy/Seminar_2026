@@ -8,6 +8,7 @@ export type Translation = {
   map: string;
   lang: string;
   category: string;
+  search: string;
 };
 
 /**
@@ -21,6 +22,7 @@ export const translations = {
     map: "Bản đồ",
     lang: "Ngôn ngữ",
     category: "Danh mục",
+    search: "Tìm kiếm",
   },
 
   en: {
@@ -30,6 +32,7 @@ export const translations = {
     map: "Map",
     lang: "Language",
     category: "Categories",
+    search: "Search",
   },
 
   ja: {
@@ -39,6 +42,7 @@ export const translations = {
     map: "地図",
     lang: "言語",
     category: "カテゴリ",
+    search: "検索",
   },
 
   // ko: {
@@ -66,6 +70,7 @@ export const translations = {
     map: "地图",
     lang: "语言",
     category: "类别",
+    search: "搜索",
   },
 
   th: {
@@ -75,6 +80,7 @@ export const translations = {
     map: "แผนที่",
     lang: "ภาษา",
     category: "หมวดหมู่",
+    search: "ค้นหา",
   },
 } satisfies Record<string, Translation>;
 

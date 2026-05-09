@@ -22,8 +22,9 @@ import { Ionicons } from "@expo/vector-icons";
 
 import * as Speech from "expo-speech";
 import { voiceMap } from "../i18n/translations";
+import { translateArray } from "../utils/translate";
 
-const BASE_URL = "http://172.23.200.235:8080";
+const BASE_URL = "http://192.168.66.11:8080";
 const { width } = Dimensions.get("window");
 
 export default function HomeScreen() {
@@ -51,8 +52,14 @@ export default function HomeScreen() {
     try {
       setLoading(true);
 
-      const locationData = await getLocations(lang);
-      const foodData = await getFoods(lang);
+      let locationData = await getLocations(lang);
+      let foodData = await getFoods(lang);
+
+      // Translate automatically if language is not vi or en
+      if (lang !== "vi" && lang !== "en") {
+        locationData = await translateArray(locationData, ["name", "description"], lang);
+        foodData = await translateArray(foodData, ["name", "description"], lang);
+      }
 
       setLocations(locationData);
       setFoods(foodData);
@@ -232,7 +239,7 @@ export default function HomeScreen() {
         <View style={styles.mapContainer}>
           <View style={styles.searchBox}>
             <TextInput
-              placeholder="Search"
+              placeholder={t.search}
               value={searchText}
               onChangeText={setSearchText}
               style={{ flex: 1 }}
